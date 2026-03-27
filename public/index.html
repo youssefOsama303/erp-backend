@@ -1,0 +1,2831 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#1e3a8a">
+  <meta name="description" content="نظام إدارة موارد المؤسسة المتكامل">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="ERP Pro">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="apple-touch-icon" href="/icons/icon-192.png">
+  <title>ERP System Pro</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap');
+
+    /* ══════════════════════════════════════════
+       DESIGN SYSTEM - متناسق ومريح للعين
+    ══════════════════════════════════════════ */
+    :root {
+      --bg-base:     #f0f4f8;   /* off-white بدل أبيض ناصع */
+      --bg-card:     #ffffff;
+      --bg-sidebar:  #1a2744;   /* كحلي داكن */
+      --bg-header:   #ffffff;
+      --accent:      #1e40af;   /* أزرق داكن - ثقة */
+      --accent-2:    #0891b2;   /* سيان - حيوية */
+      --accent-gold: #b45309;   /* ذهبي */
+      --success:     #059669;
+      --warning:     #d97706;
+      --danger:      #dc2626;
+      --text-base:   #1e293b;
+      --text-muted:  #64748b;
+      --text-light:  #94a3b8;
+      --border:      #e2e8f0;
+      --shadow-sm:   0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+      --shadow-md:   0 4px 6px rgba(0,0,0,0.07), 0 2px 4px rgba(0,0,0,0.04);
+      --shadow-lg:   0 10px 15px rgba(0,0,0,0.08), 0 4px 6px rgba(0,0,0,0.05);
+      --radius:      12px;
+      --radius-lg:   16px;
+      --transition:  all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .dark {
+      --bg-base:     #0f172a;
+      --bg-card:     #1e293b;
+      --bg-sidebar:  #0f1729;
+      --bg-header:   #1e293b;
+      --text-base:   #e2e8f0;
+      --text-muted:  #94a3b8;
+      --border:      #334155;
+      --shadow-sm:   0 1px 3px rgba(0,0,0,0.3);
+      --shadow-md:   0 4px 6px rgba(0,0,0,0.3);
+    }
+
+    * { font-family: 'Tajawal', sans-serif; box-sizing: border-box; }
+
+    body {
+      background: var(--bg-base);
+      color: var(--text-base);
+      transition: background 0.3s, color 0.3s;
+    }
+
+    /* ══ SIDEBAR ══ */
+    #sidebar {
+      width: 260px;
+      background: var(--bg-sidebar);
+      transition: width 0.3s ease;
+      flex-shrink: 0;
+    }
+    #sidebar.collapsed { width: 68px; }
+    #sidebar.collapsed .nav-label,
+    #sidebar.collapsed .nav-section,
+    #sidebar.collapsed .brand-text,
+    #sidebar.collapsed .user-info { display: none !important; }
+    #sidebar.collapsed .nav-link { justify-content: center; }
+
+    .nav-link {
+      display: flex; align-items: center; gap: 11px;
+      padding: 10px 14px; border-radius: 10px;
+      color: #94a3b8; cursor: pointer;
+      border: none; background: none; width: 100%;
+      text-align: right; font-size: 13.5px; font-weight: 500;
+      transition: var(--transition);
+    }
+    .nav-link:hover {
+      background: rgba(96, 165, 250, 0.12);
+      color: #93c5fd;
+    }
+    .nav-link.active {
+      background: rgba(59, 130, 246, 0.2);
+      color: #60a5fa;
+      font-weight: 700;
+      border-right: 3px solid #3b82f6;
+    }
+    .nav-link .icon { width: 18px; text-align: center; flex-shrink: 0; font-size: 14px; }
+
+    /* ══ CARDS ══ */
+    .card {
+      background: var(--bg-card);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--border);
+      padding: 22px;
+      transition: var(--transition);
+    }
+    .card:hover { box-shadow: var(--shadow-md); }
+
+    /* ══ KPI CARDS ══ */
+    .kpi {
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      color: white;
+      position: relative;
+      overflow: hidden;
+    }
+    .kpi::after {
+      content: '';
+      position: absolute;
+      top: -30px; left: -30px;
+      width: 120px; height: 120px;
+      background: rgba(255,255,255,0.08);
+      border-radius: 50%;
+    }
+
+    /* ══ TABLE ══ */
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; }
+    thead tr { background: var(--bg-base); border-bottom: 2px solid var(--border); }
+    th {
+      padding: 11px 14px; font-size: 11.5px; font-weight: 700;
+      color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;
+      white-space: nowrap;
+    }
+    td { padding: 12px 14px; font-size: 13.5px; border-bottom: 1px solid var(--border); color: var(--text-base); }
+    tbody tr { transition: var(--transition); }
+    tbody tr:hover { background: rgba(59, 130, 246, 0.04); }
+    tbody tr:last-child td { border-bottom: none; }
+
+    /* ══ BADGES ══ */
+    .badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 600;
+      white-space: nowrap;
+    }
+    .badge-success { background: #d1fae5; color: #065f46; }
+    .badge-warning { background: #fef3c7; color: #92400e; }
+    .badge-danger  { background: #fee2e2; color: #991b1b; }
+    .badge-info    { background: #dbeafe; color: #1e40af; }
+    .badge-cyan    { background: #cffafe; color: #155e75; }
+    .badge-gray    { background: #f1f5f9; color: #475569; }
+    .badge-purple  { background: #ede9fe; color: #5b21b6; }
+    .dark .badge-success { background: #064e3b; color: #6ee7b7; }
+    .dark .badge-warning { background: #451a03; color: #fcd34d; }
+    .dark .badge-danger  { background: #450a0a; color: #fca5a5; }
+    .dark .badge-info    { background: #1e3a5f; color: #93c5fd; }
+    .dark .badge-cyan    { background: #164e63; color: #67e8f9; }
+    .dark .badge-gray    { background: #1e293b; color: #94a3b8; }
+    .dark .badge-purple  { background: #2e1065; color: #c4b5fd; }
+
+    /* ══ BUTTONS ══ */
+    .btn {
+      display: inline-flex; align-items: center; gap: 7px;
+      padding: 9px 18px; border-radius: 9px; font-weight: 600;
+      cursor: pointer; border: none; font-size: 13px;
+      transition: var(--transition); white-space: nowrap;
+      font-family: 'Tajawal', sans-serif;
+    }
+    .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+    .btn-primary  { background: #1d4ed8; color: white; }
+    .btn-primary:hover:not(:disabled)  { background: #1e40af; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(29,78,216,0.3); }
+    .btn-success  { background: #059669; color: white; }
+    .btn-success:hover:not(:disabled)  { background: #047857; transform: translateY(-1px); }
+    .btn-danger   { background: #dc2626; color: white; }
+    .btn-danger:hover:not(:disabled)   { background: #b91c1c; }
+    .btn-warning  { background: #d97706; color: white; }
+    .btn-warning:hover:not(:disabled)  { background: #b45309; }
+    .btn-outline  { background: transparent; border: 1.5px solid var(--border); color: var(--text-muted); }
+    .btn-outline:hover:not(:disabled)  { background: var(--bg-base); color: var(--text-base); }
+    .btn-ghost    { background: transparent; color: var(--text-muted); }
+    .btn-ghost:hover { background: var(--bg-base); color: var(--text-base); }
+    .btn-sm { padding: 6px 12px; font-size: 12px; border-radius: 7px; gap: 5px; }
+    .btn-icon { padding: 8px; border-radius: 8px; }
+
+    /* ══ INPUTS ══ */
+    .input {
+      width: 100%; padding: 10px 14px; border: 1.5px solid var(--border);
+      border-radius: 9px; font-size: 13.5px; outline: none;
+      background: var(--bg-card); color: var(--text-base);
+      transition: var(--transition); font-family: 'Tajawal', sans-serif;
+    }
+    .input:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.12); }
+    .input::placeholder { color: var(--text-light); }
+    label.field-label { display: block; font-size: 13px; font-weight: 600; color: var(--text-muted); margin-bottom: 6px; }
+
+    /* ══ MODAL ══ */
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+      z-index: 1000; display: flex; align-items: center;
+      justify-content: center; padding: 16px;
+      backdrop-filter: blur(4px);
+    }
+    .modal-overlay.hidden { display: none; }
+    .modal-box {
+      background: var(--bg-card); border-radius: 20px;
+      width: 100%; max-width: 620px; max-height: 92vh;
+      overflow-y: auto; box-shadow: 0 25px 50px rgba(0,0,0,0.25);
+      animation: modalIn 0.25s ease;
+    }
+    @keyframes modalIn {
+      from { opacity: 0; transform: scale(0.96) translateY(10px); }
+      to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    .modal-header { padding: 22px 24px 0; display: flex; justify-content: space-between; align-items: center; }
+    .modal-body   { padding: 20px 24px; }
+    .modal-footer { padding: 0 24px 22px; display: flex; gap: 10px; justify-content: flex-end; }
+
+    /* ══ MODULE ══ */
+    .module { display: none; }
+    .module.active { display: block; animation: fadeUp 0.25s ease; }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ══ TOAST ══ */
+    #toastContainer {
+      position: fixed; top: 20px; left: 20px; z-index: 9999;
+      display: flex; flex-direction: column; gap: 10px;
+    }
+    .toast {
+      display: flex; align-items: center; gap: 12px;
+      padding: 14px 18px; border-radius: 12px; color: white;
+      font-weight: 600; font-size: 14px; min-width: 280px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+      animation: toastIn 0.3s ease;
+    }
+    @keyframes toastIn {
+      from { opacity: 0; transform: translateX(-30px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+    .toast-success { background: linear-gradient(135deg, #059669, #047857); }
+    .toast-error   { background: linear-gradient(135deg, #dc2626, #b91c1c); }
+    .toast-info    { background: linear-gradient(135deg, #1d4ed8, #1e40af); }
+    .toast-warning { background: linear-gradient(135deg, #d97706, #b45309); }
+
+    /* ══ LOADER ══ */
+    .loader { display: flex; align-items: center; justify-content: center; padding: 60px; flex-direction: column; gap: 14px; color: var(--text-muted); }
+    .spinner { width: 32px; height: 32px; border: 3px solid var(--border); border-top-color: #3b82f6; border-radius: 50%; animation: spin 0.7s linear infinite; }
+    .spinner-sm { width: 16px; height: 16px; border-width: 2px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ══ MISC ══ */
+    .divider { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
+    .text-muted { color: var(--text-muted); }
+    .section-title { font-size: 18px; font-weight: 700; color: var(--text-base); }
+    .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 20px; color: var(--text-muted); gap: 12px; }
+    .empty-state i { font-size: 48px; opacity: 0.3; }
+    .progress { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+    .progress-bar { height: 100%; border-radius: 3px; transition: width 0.4s; }
+
+    /* ══ INSTALL BUTTON ══ */
+    #installBtn { display: none; }
+    #installBtn.show { display: flex; }
+
+    /* ══ OFFLINE BANNER ══ */
+    #offlineBanner {
+      display: none; position: fixed; top: 0; left: 0; right: 0; z-index: 9998;
+      background: #92400e; color: white; padding: 10px 20px;
+      text-align: center; font-size: 13px; font-weight: 600;
+    }
+    #offlineBanner.show { display: block; }
+
+    /* ══ SCROLLBAR ══ */
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+    .dark ::-webkit-scrollbar-thumb { background: #334155; }
+
+    /* ══ CONFIRM DIALOG ══ */
+    #confirmDialog { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 2000; display: flex; align-items: center; justify-content: center; }
+    #confirmDialog.hidden { display: none; }
+  </style>
+</head>
+
+<body class="transition-colors">
+
+<!-- Offline Banner -->
+<div id="offlineBanner">
+  <i class="fas fa-wifi-slash ml-2"></i>
+  أنت غير متصل بالإنترنت — بعض البيانات قد لا تكون محدثة
+</div>
+
+<!-- Toast Container -->
+<div id="toastContainer"></div>
+
+<!-- ══════════════ LOGIN ══════════════ -->
+<div id="loginScreen" class="fixed inset-0 z-50 flex items-center justify-center"
+  style="background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #0c4a6e 100%)">
+  <div class="w-full max-w-md mx-4">
+    <!-- Logo -->
+    <div class="text-center mb-8">
+      <div class="w-20 h-20 mx-auto mb-4 rounded-2xl flex items-center justify-center"
+        style="background: linear-gradient(135deg, #1d4ed8, #0891b2); box-shadow: 0 0 30px rgba(59,130,246,0.4)">
+        <i class="fas fa-cube text-3xl text-white"></i>
+      </div>
+      <h1 class="text-3xl font-bold text-white">ERP System Pro</h1>
+      <p class="text-blue-300 text-sm mt-1">نظام إدارة موارد المؤسسة</p>
+    </div>
+
+    <!-- Card -->
+    <div class="rounded-2xl p-8" style="background: rgba(255,255,255,0.07); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1)">
+      <!-- Error -->
+      <div id="loginError" class="hidden mb-5 p-3 rounded-xl flex items-center gap-2 text-sm font-semibold"
+        style="background: rgba(220,38,38,0.2); border: 1px solid rgba(220,38,38,0.3); color: #fca5a5">
+        <i class="fas fa-exclamation-circle"></i>
+        <span id="loginErrorMsg"></span>
+      </div>
+
+      <div class="space-y-5">
+        <div>
+          <label class="block text-sm font-semibold text-blue-200 mb-2">البريد الإلكتروني</label>
+          <div class="relative">
+            <i class="fas fa-envelope absolute right-3 top-3 text-blue-400 text-sm"></i>
+            <input type="email" id="loginEmail" value="admin@erp.sa"
+              class="w-full pr-10 pl-4 py-3 rounded-xl text-white text-sm"
+              style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); outline: none; font-family: Tajawal"
+              placeholder="admin@erp.sa"
+              onkeydown="if(event.key==='Enter')doLogin()">
+          </div>
+        </div>
+        <div>
+          <label class="block text-sm font-semibold text-blue-200 mb-2">كلمة المرور</label>
+          <div class="relative">
+            <i class="fas fa-lock absolute right-3 top-3 text-blue-400 text-sm"></i>
+            <input type="password" id="loginPassword" value="admin123"
+              class="w-full pr-10 pl-4 py-3 rounded-xl text-white text-sm"
+              style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); outline: none; font-family: Tajawal"
+              placeholder="••••••••"
+              onkeydown="if(event.key==='Enter')doLogin()">
+          </div>
+        </div>
+        <button id="loginBtn" onclick="doLogin()"
+          class="w-full py-3 rounded-xl font-bold text-white text-base flex items-center justify-center gap-2"
+          style="background: linear-gradient(135deg, #1d4ed8, #0891b2); transition: all 0.2s"
+          onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 20px rgba(29,78,216,0.4)'"
+          onmouseout="this.style.transform='';this.style.boxShadow=''">
+          <i class="fas fa-sign-in-alt"></i> تسجيل الدخول
+        </button>
+      </div>
+
+      <div class="mt-5 text-center">
+        <p class="text-xs" style="color: rgba(147,197,253,0.7)">
+          <i class="fas fa-info-circle ml-1"></i>
+          admin@erp.sa · admin123
+        </p>
+      </div>
+    </div>
+
+    <!-- PWA Install -->
+    <button id="installBtn" onclick="installPWA()"
+      class="btn mt-4 w-full justify-center"
+      style="background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2)">
+      <i class="fas fa-download"></i> تثبيت التطبيق على الجهاز
+    </button>
+  </div>
+</div>
+
+<!-- ══════════════ MAIN APP ══════════════ -->
+<div id="mainApp" style="display:none" class="flex h-screen overflow-hidden">
+
+  <!-- SIDEBAR -->
+  <aside id="sidebar" class="flex flex-col overflow-hidden transition-all">
+    <!-- Brand -->
+    <div class="p-4 flex items-center gap-3" style="border-bottom: 1px solid rgba(255,255,255,0.06)">
+      <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+        style="background: linear-gradient(135deg, #1d4ed8, #0891b2)">
+        <i class="fas fa-cube text-white text-lg"></i>
+      </div>
+      <div class="brand-text">
+        <p class="font-bold text-white text-sm">ERP System Pro</p>
+        <p class="text-xs" style="color: #64748b">v1.0.0</p>
+      </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="flex-1 overflow-y-auto p-3 space-y-0.5">
+      <p class="nav-section text-xs font-bold px-3 py-2" style="color: #475569; letter-spacing: 0.8px">الرئيسية</p>
+      <button class="nav-link active" onclick="showModule('dashboard',this)" id="nav-dashboard">
+        <i class="icon fas fa-chart-pie" style="color: #60a5fa"></i>
+        <span class="nav-label">لوحة التحكم</span>
+      </button>
+
+      <p class="nav-section text-xs font-bold px-3 pt-3 pb-1" style="color: #475569; letter-spacing: 0.8px">المحاسبة</p>
+      <button class="nav-link" onclick="showModule('invoices',this)">
+        <i class="icon fas fa-file-invoice-dollar" style="color: #34d399"></i>
+        <span class="nav-label">الفواتير</span>
+      </button>
+      <button class="nav-link" onclick="showModule('accounts',this)">
+        <i class="icon fas fa-book-open" style="color: #6ee7b7"></i>
+        <span class="nav-label">دليل الحسابات</span>
+      </button>
+
+      <p class="nav-section text-xs font-bold px-3 pt-3 pb-1" style="color: #475569; letter-spacing: 0.8px">التجارة</p>
+      <button class="nav-link" onclick="showModule('sales',this)">
+        <i class="icon fas fa-shopping-cart" style="color: #c084fc"></i>
+        <span class="nav-label">أوامر البيع</span>
+      </button>
+      <button class="nav-link" onclick="showModule('purchases',this)">
+        <i class="icon fas fa-shopping-bag" style="color: #f9a8d4"></i>
+        <span class="nav-label">أوامر الشراء</span>
+      </button>
+      <button class="nav-link" onclick="showModule('customers',this)">
+        <i class="icon fas fa-user-tie" style="color: #93c5fd"></i>
+        <span class="nav-label">العملاء</span>
+      </button>
+      <button class="nav-link" onclick="showModule('suppliers',this)">
+        <i class="icon fas fa-truck" style="color: #fdba74"></i>
+        <span class="nav-label">الموردون</span>
+      </button>
+
+      <p class="nav-section text-xs font-bold px-3 pt-3 pb-1" style="color: #475569; letter-spacing: 0.8px">المخازن</p>
+      <button class="nav-link" onclick="showModule('products',this)">
+        <i class="icon fas fa-boxes" style="color: #fcd34d"></i>
+        <span class="nav-label">المنتجات</span>
+      </button>
+      <button class="nav-link" onclick="showModule('movements',this)">
+        <i class="icon fas fa-exchange-alt" style="color: #67e8f9"></i>
+        <span class="nav-label">حركة المخزون</span>
+      </button>
+
+      <p class="nav-section text-xs font-bold px-3 pt-3 pb-1" style="color: #475569; letter-spacing: 0.8px">الموارد البشرية</p>
+      <button class="nav-link" onclick="showModule('employees',this)">
+        <i class="icon fas fa-users" style="color: #a78bfa"></i>
+        <span class="nav-label">الموظفون</span>
+      </button>
+      <button class="nav-link" onclick="showModule('leaves',this)">
+        <i class="icon fas fa-calendar-check" style="color: #5eead4"></i>
+        <span class="nav-label">الإجازات</span>
+      </button>
+      <button class="nav-link" onclick="showModule('payroll',this)">
+        <i class="icon fas fa-money-bill-wave" style="color: #86efac"></i>
+        <span class="nav-label">مسير الرواتب</span>
+      </button>
+    </nav>
+
+    <!-- User -->
+    <div class="p-3" style="border-top: 1px solid rgba(255,255,255,0.06)">
+      <div class="flex items-center gap-3 p-2 rounded-xl" style="background: rgba(255,255,255,0.04)">
+        <div id="userAvatar" class="w-9 h-9 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0"
+          style="background: linear-gradient(135deg, #1d4ed8, #0891b2)">م</div>
+        <div class="user-info flex-1 min-w-0">
+          <p id="userName" class="text-sm font-semibold text-white truncate">مدير النظام</p>
+          <p id="userRole" class="text-xs truncate" style="color: #64748b">admin</p>
+        </div>
+        <button onclick="doLogout()" class="text-gray-500 hover:text-red-400 transition-colors flex-shrink-0" title="تسجيل خروج">
+          <i class="fas fa-sign-out-alt text-sm"></i>
+        </button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="flex-1 flex flex-col overflow-hidden">
+
+    <!-- TOPBAR -->
+    <header id="topbar" class="flex-shrink-0 flex items-center justify-between px-6 py-3"
+      style="background: var(--bg-card); border-bottom: 1px solid var(--border); box-shadow: var(--shadow-sm)">
+      <div class="flex items-center gap-4">
+        <button onclick="toggleSidebar()" class="btn btn-ghost btn-icon text-base">
+          <i class="fas fa-bars"></i>
+        </button>
+        <div>
+          <h2 id="pageTitle" class="text-lg font-bold" style="color: var(--text-base)">لوحة التحكم</h2>
+          <p id="pageBreadcrumb" class="text-xs text-muted">الرئيسية / لوحة التحكم</p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <!-- API Status -->
+        <div id="apiStatus" class="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full font-semibold"
+          style="background: #d1fae5; color: #065f46">
+          <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+          <span>متصل</span>
+        </div>
+
+        <!-- PWA Install -->
+        <button id="installBtnTop" onclick="installPWA()" class="btn btn-outline btn-sm hidden">
+          <i class="fas fa-download"></i>
+          <span class="hidden md:inline">تثبيت</span>
+        </button>
+
+        <!-- Dark Mode -->
+        <button onclick="toggleDark()" class="btn btn-ghost btn-icon" title="الوضع الليلي">
+          <i class="fas fa-moon dark:hidden text-gray-500"></i>
+          <i class="fas fa-sun hidden dark:block text-yellow-400"></i>
+        </button>
+
+        <!-- Refresh -->
+        <button onclick="refreshModule()" class="btn btn-ghost btn-icon" title="تحديث">
+          <i class="fas fa-sync-alt text-gray-500" id="refreshIcon"></i>
+        </button>
+
+        <!-- Notifications -->
+        <div class="relative">
+          <button class="btn btn-ghost btn-icon" title="الإشعارات">
+            <i class="fas fa-bell text-gray-500"></i>
+            <span id="notifBadge" class="hidden absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">0</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- CONTENT AREA -->
+    <div class="flex-1 overflow-y-auto p-5" id="contentArea" style="background: var(--bg-base)">
+
+      <!-- ═══════════ DASHBOARD ═══════════ -->
+      <div id="dashboard" class="module active">
+        <div id="dashboardContent">
+          <div class="loader"><div class="spinner"></div><p>جاري تحميل البيانات...</p></div>
+        </div>
+      </div>
+
+      <!-- ═══════════ INVOICES ═══════════ -->
+      <div id="invoices" class="module">
+        <div class="flex flex-wrap justify-between items-center gap-3 mb-5">
+          <div class="flex gap-3 flex-wrap">
+            <input type="text" placeholder="🔍 بحث..." class="input" style="width:200px"
+              oninput="filterTable('invoiceTable',this.value)">
+            <select class="input" style="width:140px" id="invStatusFilter" onchange="loadInvoices()">
+              <option value="">كل الحالات</option>
+              <option value="مسودة">مسودة</option>
+              <option value="معلقة">معلقة</option>
+              <option value="مدفوعة">مدفوعة</option>
+              <option value="متأخرة">متأخرة</option>
+            </select>
+          </div>
+          <button class="btn btn-primary" onclick="openModal('invoiceModal'); prepareInvoiceModal()">
+            <i class="fas fa-plus"></i> فاتورة جديدة
+          </button>
+        </div>
+        <!-- Stats Row -->
+        <div id="invStats" class="grid grid-cols-4 gap-3 mb-5"></div>
+        <div class="card p-0 overflow-hidden">
+          <div id="invoicesContent"><div class="loader"><div class="spinner"></div></div></div>
+        </div>
+      </div>
+
+      <!-- ═══════════ ACCOUNTS ═══════════ -->
+      <div id="accounts" class="module">
+        <div class="flex justify-between items-center mb-5">
+          <input type="text" placeholder="🔍 بحث..." class="input" style="width:220px"
+            oninput="filterTable('accountsTable',this.value)">
+          <button class="btn btn-primary" onclick="openModal('accountModal')">
+            <i class="fas fa-plus"></i> حساب جديد
+          </button>
+        </div>
+        <div id="accSummary" class="grid grid-cols-4 gap-3 mb-5"></div>
+        <div class="card p-0 overflow-hidden">
+          <div id="accountsContent"><div class="loader"><div class="spinner"></div></div></div>
+        </div>
+      </div>
+
+      <!-- ═══════════ SALES ═══════════ -->
+      <div id="sales" class="module">
+        <div class="flex justify-between items-center mb-5">
+          <div class="flex gap-3">
+            <input type="text" placeholder="🔍 بحث..." class="input" style="width:200px"
+              oninput="filterTable('salesTable',this.value)">
+            <select class="input" style="width:140px" onchange="loadSales(this.value)">
+              <option value="">كل الحالات</option>
+              <option value="مسودة">مسودة</option>
+              <option value="مؤكد">مؤكد</option>
+              <option value="مُسلَّم">مُسلَّم</option>
+              <option value="ملغي">ملغي</option>
+            </select>
+          </div>
+          <button class="btn btn-success" onclick="openModal('salesModal'); prepareSalesModal()">
+            <i class="fas fa-plus"></i> أمر بيع جديد
+          </button>
+        </div>
+        <div class="card p-0 overflow-hidden">
+          <div id="salesContent"><div class="loader"><div class="spinner"></div></div></div>
+        </div>
+      </div>
+
+      <!-- ═══════════ PURCHASES ═══════════ -->
+      <div id="purchases" class="module">
+        <div class="flex justify-between items-center mb-5">
+          <input type="text" placeholder="🔍 بحث..." class="input" style="width:200px"
+            oninput="filterTable('purchasesTable',this.value)">
+          <button class="btn btn-primary" onclick="openModal('purchaseModal'); preparePurchaseModal()">
+            <i class="fas fa-plus"></i> أمر شراء جديد
+          </button>
+        </div>
+        <div class="card p-0 overflow-hidden">
+          <div id="purchasesContent"><div class="loader"><div class="spinner"></div></div></div>
+        </div>
+      </div>
+
+      <!-- ═══════════ CUSTOMERS ═══════════ -->
+      <div id="customers" class="module">
+        <div class="flex justify-between items-center mb-5">
+          <input type="text" id="custSearch" placeholder="🔍 بحث..." class="input" style="width:220px"
+            oninput="loadCustomers(this.value)">
+          <button class="btn btn-primary" onclick="openModal('customerModal'); resetCustomerModal()">
+            <i class="fas fa-plus"></i> عميل جديد
+          </button>
+        </div>
+        <div class="card p-0 overflow-hidden">
+          <div id="customersContent"><div class="loader"><div class="spinner"></div></div></div>
+        </div>
+      </div>
+
+      <!-- ═══════════ SUPPLIERS ═══════════ -->
+      <div id="suppliers" class="module">
+        <div class="flex justify-between items-center mb-5">
+          <input type="text" placeholder="🔍 بحث..." class="input" style="width:220px"
+            oninput="loadSuppliers(this.value)">
+          <button class="btn btn-primary" onclick="openModal('supplierModal'); resetSupplierModal()">
+            <i class="fas fa-plus"></i> مورد جديد
+          </button>
+        </div>
+        <div class="card p-0 overflow-hidden">
+          <div id="suppliersContent"><div class="loader"><div class="spinner"></div></div></div>
+        </div>
+      </div>
+
+      <!-- ═══════════ PRODUCTS ═══════════ -->
+      <div id="products" class="module">
+        <div class="flex flex-wrap justify-between items-center gap-3 mb-5">
+          <div class="flex gap-3">
+            <input type="text" placeholder="🔍 بحث..." class="input" style="width:200px"
+              oninput="filterTable('productsTable',this.value)">
+            <select class="input" style="width:150px" onchange="loadProducts(this.value==='low')">
+              <option value="">كل المنتجات</option>
+              <option value="low">منخفض/نفد فقط</option>
+            </select>
+          </div>
+          <button class="btn btn-primary" onclick="openModal('productModal'); resetProductModal()">
+            <i class="fas fa-plus"></i> منتج جديد
+          </button>
+        </div>
+        <div id="productsAlerts" class="mb-4"></div>
+        <div class="card p-0 overflow-hidden">
+          <div id="productsContent"><div class="loader"><div class="spinner"></div></div></div>
+        </div>
+      </div>
+
+      <!-- ═══════════ MOVEMENTS ═══════════ -->
+      <div id="movements" class="module">
+        <div class="flex justify-between items-center mb-5">
+          <input type="text" placeholder="🔍 بحث..." class="input" style="width:200px"
+            oninput="filterTable('movementsTable',this.value)">
+          <div class="flex gap-2">
+            <button class="btn btn-primary" onclick="openModal('movementModal'); prepareMovementModal('وارد')">
+              <i class="fas fa-arrow-down"></i> وارد
+            </button>
+            <button class="btn" style="background:#7c3aed;color:white" onclick="openModal('movementModal'); prepareMovementModal('صادر')">
+              <i class="fas fa-arrow-up"></i> صادر
+            </button>
+          </div>
+        </div>
+        <div class="card p-0 overflow-hidden">
+          <div id="movementsContent"><div class="loader"><div class="spinner"></div></div></div>
+        </div>
+      </div>
+
+      <!-- ═══════════ EMPLOYEES ═══════════ -->
+      <div id="employees" class="module">
+        <div class="flex flex-wrap justify-between items-center gap-3 mb-5">
+          <div class="flex gap-3">
+            <input type="text" placeholder="🔍 بحث..." class="input" style="width:200px"
+              oninput="loadEmployees('',this.value)">
+            <select class="input" style="width:130px" onchange="loadEmployees(this.value)">
+              <option value="">كل الحالات</option>
+              <option value="نشط">نشط</option>
+              <option value="إجازة">إجازة</option>
+              <option value="موقوف">موقوف</option>
+            </select>
+          </div>
+          <button class="btn btn-primary" onclick="openModal('employeeModal'); resetEmployeeModal()">
+            <i class="fas fa-user-plus"></i> موظف جديد
+          </button>
+        </div>
+        <div class="card p-0 overflow-hidden">
+          <div id="employeesContent"><div class="loader"><div class="spinner"></div></div></div>
+        </div>
+      </div>
+
+      <!-- ═══════════ LEAVES ═══════════ -->
+      <div id="leaves" class="module">
+        <div class="flex justify-between items-center mb-5">
+          <select class="input" style="width:160px" onchange="loadLeaves(this.value)">
+            <option value="">كل الطلبات</option>
+            <option value="معلقة">معلقة</option>
+            <option value="معتمدة">معتمدة</option>
+            <option value="مرفوضة">مرفوضة</option>
+          </select>
+          <button class="btn btn-primary" onclick="openModal('leaveModal'); prepareLeaveModal()">
+            <i class="fas fa-plus"></i> طلب إجازة
+          </button>
+        </div>
+        <div class="card p-0 overflow-hidden">
+          <div id="leavesContent"><div class="loader"><div class="spinner"></div></div></div>
+        </div>
+      </div>
+
+      <!-- ═══════════ PAYROLL ═══════════ -->
+      <div id="payroll" class="module">
+        <div class="flex flex-wrap justify-between items-center gap-3 mb-5">
+          <input type="month" id="payrollMonth" class="input" style="width:180px" onchange="loadPayroll()">
+          <div class="flex gap-2">
+            <button class="btn btn-success" onclick="generatePayroll()">
+              <i class="fas fa-cogs"></i> إنشاء مسير شهري
+            </button>
+          </div>
+        </div>
+        <div id="payrollSummary" class="grid grid-cols-4 gap-3 mb-5"></div>
+        <div class="card p-0 overflow-hidden">
+          <div id="payrollContent"><div class="loader"><div class="spinner"></div></div></div>
+        </div>
+      </div>
+
+    </div><!-- end contentArea -->
+  </main>
+</div>
+
+<!-- ══════════════ MODALS ══════════════ -->
+
+<!-- INVOICE MODAL -->
+<div id="invoiceModal" class="modal-overlay hidden">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3 class="text-lg font-bold">فاتورة جديدة</h3>
+      <button onclick="closeModal('invoiceModal')" class="btn btn-ghost btn-icon text-lg"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body space-y-4">
+      <div class="grid grid-cols-2 gap-4">
+        <div><label class="field-label">العميل *</label>
+          <select id="inv_cust" class="input"><option value="">اختر العميل...</option></select></div>
+        <div><label class="field-label">التاريخ *</label>
+          <input type="date" id="inv_date" class="input"></div>
+        <div><label class="field-label">تاريخ الاستحقاق</label>
+          <input type="date" id="inv_due" class="input"></div>
+        <div><label class="field-label">القيمة المضافة %</label>
+       <input type="number" id="inv_tax" value="14" class="input" oninput="calcInvTotal()"></div>
+     <div><label class="field-label">خصم المنبع %</label>
+       <input type="number" id="inv_withhold" value="1" class="input" oninput="calcInvTotal()"></div>
+      </div>
+      <div>
+        <div class="flex justify-between items-center mb-2">
+          <label class="field-label mb-0">البنود</label>
+          <button onclick="addInvLine()" class="btn btn-outline btn-sm"><i class="fas fa-plus"></i> بند</button>
+        </div>
+        <div style="background:var(--bg-base); border-radius:10px; padding:12px">
+          <div class="grid gap-1 mb-2" style="grid-template-columns:3fr 1fr 1.5fr 1.5fr auto">
+            <span class="text-xs font-bold text-muted">البيان</span>
+            <span class="text-xs font-bold text-muted">الكمية</span>
+            <span class="text-xs font-bold text-muted">السعر</span>
+            <span class="text-xs font-bold text-muted">الإجمالي</span>
+            <span></span>
+          </div>
+          <div id="invLinesContainer" class="space-y-2"></div>
+        </div>
+      </div>
+      <div style="background:var(--bg-base); border-radius:10px; padding:14px" class="space-y-2 text-sm">
+        <div class="flex justify-between"><span class="text-muted">قبل الضريبة</span><span id="inv_sub" class="font-semibold">0 ج.م</span></div>
+        <div class="flex justify-between"><span class="text-muted">الضريبة</span><span id="inv_taxamt" class="font-semibold">0 ج.م</span></div>
+        <hr class="divider my-1">
+        <div class="flex justify-between text-base"><strong>الإجمالي</strong><strong id="inv_tot" style="color:#1d4ed8;font-size:18px">0 ج.م</strong></div>
+      </div>
+      <div><label class="field-label">ملاحظات</label>
+        <textarea id="inv_notes" class="input" rows="2" placeholder="اختياري"></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button onclick="closeModal('invoiceModal')" class="btn btn-outline">إلغاء</button>
+      <button onclick="saveInvoice(false)" class="btn btn-outline"><i class="fas fa-save"></i> حفظ مسودة</button>
+      <button onclick="saveInvoice(true)" class="btn btn-primary"><i class="fas fa-paper-plane"></i> إصدار الفاتورة</button>
+    </div>
+  </div>
+</div>
+
+<!-- SALES ORDER MODAL -->
+<div id="salesModal" class="modal-overlay hidden">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3 class="text-lg font-bold">أمر بيع جديد</h3>
+      <button onclick="closeModal('salesModal')" class="btn btn-ghost btn-icon text-lg"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body space-y-4">
+      <div class="grid grid-cols-2 gap-4">
+        <div><label class="field-label">العميل *</label>
+          <select id="so_cust" class="input"><option value="">اختر...</option></select></div>
+        <div><label class="field-label">تاريخ الأمر *</label>
+          <input type="date" id="so_date" class="input"></div>
+        <div><label class="field-label">تاريخ التسليم</label>
+          <input type="date" id="so_delivery" class="input"></div>
+        <div><label class="field-label">ملاحظات</label>
+          <input type="text" id="so_notes" class="input" placeholder="اختياري"></div>
+      </div>
+      <div>
+        <div class="flex justify-between items-center mb-2">
+          <label class="field-label mb-0">المنتجات</label>
+          <button onclick="addSOLine()" class="btn btn-outline btn-sm"><i class="fas fa-plus"></i> منتج</button>
+        </div>
+        <div style="background:var(--bg-base); border-radius:10px; padding:12px">
+          <div class="grid gap-1 mb-2" style="grid-template-columns:3fr 1fr 1.5fr 1.5fr auto">
+            <span class="text-xs font-bold text-muted">المنتج</span>
+            <span class="text-xs font-bold text-muted">الكمية</span>
+            <span class="text-xs font-bold text-muted">السعر</span>
+            <span class="text-xs font-bold text-muted">الإجمالي</span>
+            <span></span>
+          </div>
+          <div id="soLinesContainer" class="space-y-2"></div>
+        </div>
+      </div>
+      <div class="flex justify-between items-center p-3 rounded-xl" style="background:#d1fae5;color:#065f46">
+        <span class="font-bold">الإجمالي (شامل 14% ضريبة)</span>
+        <span id="so_tot" class="font-bold text-xl">0 ج.م</span>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button onclick="closeModal('salesModal')" class="btn btn-outline">إلغاء</button>
+      <button onclick="saveSalesOrder()" class="btn btn-success"><i class="fas fa-check"></i> تأكيد الأمر</button>
+    </div>
+  </div>
+</div>
+
+<!-- PURCHASE ORDER MODAL -->
+<div id="purchaseModal" class="modal-overlay hidden">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3 class="text-lg font-bold">أمر شراء جديد</h3>
+      <button onclick="closeModal('purchaseModal')" class="btn btn-ghost btn-icon text-lg"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body space-y-4">
+      <div class="grid grid-cols-2 gap-4">
+        <div><label class="field-label">المورد *</label>
+          <select id="po_supp" class="input"><option value="">اختر...</option></select></div>
+        <div><label class="field-label">تاريخ الأمر *</label>
+          <input type="date" id="po_date" class="input"></div>
+        <div><label class="field-label">تاريخ الاستلام المتوقع</label>
+          <input type="date" id="po_expected" class="input"></div>
+        <div><label class="field-label">ملاحظات</label>
+          <input type="text" id="po_notes" class="input" placeholder="اختياري"></div>
+      </div>
+      <div>
+        <div class="flex justify-between items-center mb-2">
+          <label class="field-label mb-0">المنتجات</label>
+          <button onclick="addPOLine()" class="btn btn-outline btn-sm"><i class="fas fa-plus"></i> منتج</button>
+        </div>
+        <div style="background:var(--bg-base); border-radius:10px; padding:12px">
+          <div class="grid gap-1 mb-2" style="grid-template-columns:3fr 1fr 1.5fr 1.5fr auto">
+            <span class="text-xs font-bold text-muted">المنتج</span>
+            <span class="text-xs font-bold text-muted">الكمية</span>
+            <span class="text-xs font-bold text-muted">السعر</span>
+            <span class="text-xs font-bold text-muted">الإجمالي</span>
+            <span></span>
+          </div>
+          <div id="poLinesContainer" class="space-y-2"></div>
+        </div>
+      </div>
+      <div class="flex justify-between items-center p-3 rounded-xl" style="background:#dbeafe;color:#1e40af">
+        <span class="font-bold">الإجمالي (شامل 14% ضريبة)</span>
+        <span id="po_tot" class="font-bold text-xl">0 ج.م</span>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button onclick="closeModal('purchaseModal')" class="btn btn-outline">إلغاء</button>
+      <button onclick="savePurchaseOrder()" class="btn btn-primary"><i class="fas fa-check"></i> تأكيد الأمر</button>
+    </div>
+  </div>
+</div>
+
+<!-- CUSTOMER MODAL -->
+<div id="customerModal" class="modal-overlay hidden">
+  <div class="modal-box" style="max-width:500px">
+    <div class="modal-header">
+      <h3 id="custModalTitle" class="text-lg font-bold">عميل جديد</h3>
+      <button onclick="closeModal('customerModal')" class="btn btn-ghost btn-icon text-lg"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body space-y-4">
+      <input type="hidden" id="cust_id">
+      <div class="grid grid-cols-2 gap-4">
+        <div><label class="field-label">الكود *</label><input id="cust_code" class="input" placeholder="C-004"></div>
+        <div><label class="field-label">الاسم *</label><input id="cust_name" class="input" placeholder="اسم الشركة/العميل"></div>
+        <div><label class="field-label">الهاتف</label><input id="cust_phone" class="input" placeholder="05XXXXXXXX"></div>
+        <div><label class="field-label">المدينة</label><input id="cust_city" class="input" placeholder="الرياض"></div>
+        <div><label class="field-label">البريد الإلكتروني</label><input id="cust_email" class="input" type="email" placeholder="email@example.com"></div>
+        <div><label class="field-label">الرقم الضريبي</label><input id="cust_tax" class="input" placeholder="اختياري"></div>
+        <div>
+  <label class="field-label">الدولة</label>
+  <select id="contact_country" class="input" onchange="onCountryChange()">
+    <option value="">جاري التحميل...</option>
+  </select>
+</div>
+<div>
+  <label class="field-label">المحافظة / الولاية</label>
+  <select id="contact_state" class="input" onchange="onStateChange()" disabled>
+    <option value="">اختر المحافظة...</option>
+  </select>
+</div>
+<div>
+  <label class="field-label">المدينة / المنطقة</label>
+  <select id="contact_city" class="input" disabled>
+    <option value="">اختر المدينة...</option>
+  </select>
+</div>
+<div>
+  <label class="field-label">الرمز البريدي</label>
+  <input type="text" id="contact_zip" class="input" placeholder="مثال: 11511">
+</div>
+<div class="col-span-2">
+  <label class="field-label">العنوان التفصيلي</label>
+  <input type="text" id="contact_address" class="input" placeholder="اسم الشارع، رقم المبنى...">
+</div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button onclick="closeModal('customerModal')" class="btn btn-outline">إلغاء</button>
+      <button onclick="saveCustomer()" class="btn btn-primary"><i class="fas fa-save"></i> حفظ</button>
+    </div>
+  </div>
+</div>
+
+<!-- SUPPLIER MODAL -->
+<div id="supplierModal" class="modal-overlay hidden">
+  <div class="modal-box" style="max-width:500px">
+    <div class="modal-header">
+      <h3 class="text-lg font-bold">مورد جديد</h3>
+      <button onclick="closeModal('supplierModal')" class="btn btn-ghost btn-icon text-lg"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body space-y-4">
+      <div class="grid grid-cols-2 gap-4">
+        <div><label class="field-label">الكود *</label><input id="supp_code" class="input" placeholder="S-004"></div>
+        <div><label class="field-label">الاسم *</label><input id="supp_name" class="input"></div>
+        <div><label class="field-label">الهاتف</label><input id="supp_phone" class="input"></div>
+        <div><label class="field-label">المدينة</label><input id="supp_city" class="input"></div>
+        <div><label class="field-label">التقييم</label>
+          <select id="supp_rating" class="input">
+            <option value="5">⭐⭐⭐⭐⭐</option>
+            <option value="4">⭐⭐⭐⭐</option>
+            <option value="3" selected>⭐⭐⭐</option>
+            <option value="2">⭐⭐</option>
+            <option value="1">⭐</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button onclick="closeModal('supplierModal')" class="btn btn-outline">إلغاء</button>
+      <button onclick="saveSupplier()" class="btn btn-primary"><i class="fas fa-save"></i> حفظ</button>
+    </div>
+  </div>
+</div>
+
+<!-- PRODUCT MODAL -->
+<div id="productModal" class="modal-overlay hidden">
+  <div class="modal-box" style="max-width:560px">
+    <div class="modal-header">
+      <h3 id="prodModalTitle" class="text-lg font-bold">منتج جديد</h3>
+      <button onclick="closeModal('productModal')" class="btn btn-ghost btn-icon text-lg"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body space-y-4">
+      <input type="hidden" id="prod_id">
+      <div class="grid grid-cols-2 gap-4">
+        <div><label class="field-label">الكود *</label><input id="prod_code" class="input" placeholder="PRD-004"></div>
+        <div><label class="field-label">الاسم *</label><input id="prod_name" class="input"></div>
+        <div><label class="field-label">الفئة</label>
+          <select id="prod_cat" class="input"><option value="">-- بدون فئة --</option></select></div>
+        <div><label class="field-label">وحدة القياس</label>
+          <select id="prod_unit" class="input">
+            <option>قطعة</option><option>كجم</option><option>لتر</option>
+            <option>متر</option><option>صندوق</option><option>رزمة</option>
+          </select>
+        </div>
+        <div><label class="field-label">سعر التكلفة</label><input id="prod_cost" type="number" class="input" value="0"></div>
+        <div><label class="field-label">سعر البيع</label><input id="prod_price" type="number" class="input" value="0"></div>
+        <div><label class="field-label">الحد الأدنى للتنبيه</label><input id="prod_min" type="number" class="input" value="5"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button onclick="closeModal('productModal')" class="btn btn-outline">إلغاء</button>
+      <button onclick="saveProduct()" class="btn btn-primary"><i class="fas fa-save"></i> حفظ</button>
+    </div>
+  </div>
+</div>
+
+<!-- MOVEMENT MODAL -->
+<div id="movementModal" class="modal-overlay hidden">
+  <div class="modal-box" style="max-width:480px">
+    <div class="modal-header">
+      <h3 id="movModalTitle" class="text-lg font-bold">حركة مخزون</h3>
+      <button onclick="closeModal('movementModal')" class="btn btn-ghost btn-icon text-lg"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body space-y-4">
+      <input type="hidden" id="mov_type">
+      <div><label class="field-label">المنتج *</label>
+        <select id="mov_prod" class="input"><option value="">اختر المنتج...</option></select></div>
+      <div class="grid grid-cols-2 gap-4">
+        <div><label class="field-label">المخزن *</label>
+          <select id="mov_wh" class="input"><option value="">اختر...</option></select></div>
+        <div><label class="field-label">الكمية *</label>
+          <input type="number" id="mov_qty" class="input" value="1" min="1"></div>
+      </div>
+      <div><label class="field-label">المرجع</label>
+        <input id="mov_ref" class="input" placeholder="رقم أمر البيع/الشراء..."></div>
+      <div><label class="field-label">ملاحظات</label>
+        <input id="mov_notes" class="input"></div>
+    </div>
+    <div class="modal-footer">
+      <button onclick="closeModal('movementModal')" class="btn btn-outline">إلغاء</button>
+      <button onclick="saveMovement()" class="btn btn-primary"><i class="fas fa-save"></i> تسجيل الحركة</button>
+    </div>
+  </div>
+</div>
+
+<!-- EMPLOYEE MODAL -->
+<div id="employeeModal" class="modal-overlay hidden">
+  <div class="modal-box" style="max-width:560px">
+    <div class="modal-header">
+      <h3 id="empModalTitle" class="text-lg font-bold">موظف جديد</h3>
+      <button onclick="closeModal('employeeModal')" class="btn btn-ghost btn-icon text-lg"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body space-y-4">
+      <input type="hidden" id="emp_id">
+      <div class="grid grid-cols-2 gap-4">
+        <div><label class="field-label">الكود *</label><input id="emp_code" class="input" placeholder="EMP-004"></div>
+        <div><label class="field-label">الاسم *</label><input id="emp_name" class="input"></div>
+        <div><label class="field-label">القسم</label>
+          <select id="emp_dept" class="input"><option value="">-- بدون قسم --</option></select></div>
+        <div><label class="field-label">المسمى الوظيفي</label><input id="emp_title" class="input"></div>
+        <div><label class="field-label">الراتب الأساسي</label><input id="emp_salary" type="number" class="input" value="0"></div>
+        <div><label class="field-label">تاريخ التعيين *</label><input id="emp_join" type="date" class="input"></div>
+        <div><label class="field-label">الهاتف</label><input id="emp_phone" class="input"></div>
+        <div><label class="field-label">البريد الإلكتروني</label><input id="emp_email" type="email" class="input"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button onclick="closeModal('employeeModal')" class="btn btn-outline">إلغاء</button>
+      <button onclick="saveEmployee()" class="btn btn-primary"><i class="fas fa-save"></i> حفظ</button>
+    </div>
+  </div>
+</div>
+
+<!-- LEAVE MODAL -->
+<div id="leaveModal" class="modal-overlay hidden">
+  <div class="modal-box" style="max-width:480px">
+    <div class="modal-header">
+      <h3 class="text-lg font-bold">طلب إجازة جديد</h3>
+      <button onclick="closeModal('leaveModal')" class="btn btn-ghost btn-icon text-lg"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body space-y-4">
+      <div><label class="field-label">الموظف *</label>
+        <select id="leave_emp" class="input"><option value="">اختر الموظف...</option></select></div>
+      <div class="grid grid-cols-2 gap-4">
+        <div><label class="field-label">نوع الإجازة *</label>
+          <select id="leave_type" class="input">
+            <option>سنوية</option><option>مرضية</option>
+            <option>طارئة</option><option>بدون راتب</option>
+          </select>
+        </div>
+        <div><label class="field-label">سبب الإجازة</label>
+          <input id="leave_reason" class="input" placeholder="اختياري"></div>
+        <div><label class="field-label">من *</label><input id="leave_from" type="date" class="input"></div>
+        <div><label class="field-label">إلى *</label><input id="leave_to" type="date" class="input"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button onclick="closeModal('leaveModal')" class="btn btn-outline">إلغاء</button>
+      <button onclick="saveLeave()" class="btn btn-primary"><i class="fas fa-save"></i> إرسال الطلب</button>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIRM DIALOG -->
+<div id="confirmDialog" class="hidden">
+  <div class="modal-box" style="max-width:400px; padding:30px; text-align:center">
+    <div class="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
+      style="background:#fee2e2">
+      <i class="fas fa-exclamation-triangle text-2xl" style="color:#dc2626"></i>
+    </div>
+    <h3 id="confirmTitle" class="text-lg font-bold mb-2">تأكيد العملية</h3>
+    <p id="confirmMsg" class="text-muted text-sm mb-6"></p>
+    <div class="flex gap-3 justify-center">
+      <button onclick="closeConfirm(false)" class="btn btn-outline">إلغاء</button>
+      <button id="confirmOkBtn" onclick="closeConfirm(true)" class="btn btn-danger">تأكيد</button>
+    </div>
+  </div>
+</div>
+
+<!-- ACCOUNT MODAL -->
+<div id="accountModal" class="modal-overlay hidden">
+  <div class="modal-box" style="max-width:480px">
+    <div class="modal-header">
+      <h3 class="text-lg font-bold">حساب جديد</h3>
+      <button onclick="closeModal('accountModal')" class="btn btn-ghost btn-icon text-lg"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body space-y-4">
+      <div class="grid grid-cols-2 gap-4">
+        <div><label class="field-label">الكود *</label><input id="acc_code" class="input" placeholder="6000"></div>
+        <div><label class="field-label">الاسم *</label><input id="acc_name" class="input"></div>
+        <div><label class="field-label">النوع *</label>
+          <select id="acc_type" class="input">
+            <option>أصول</option><option>خصوم</option>
+            <option>حقوق ملكية</option><option>إيرادات</option><option>مصروفات</option>
+          </select></div>
+        <div><label class="field-label">الطبيعة *</label>
+          <select id="acc_nature" class="input">
+            <option>مدين</option><option>دائن</option>
+          </select></div>
+        <div><label class="field-label">الرصيد الافتتاحي</label>
+          <input id="acc_balance" type="number" class="input" value="0"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button onclick="closeModal('accountModal')" class="btn btn-outline">إلغاء</button>
+      <button onclick="saveAccount()" class="btn btn-primary"><i class="fas fa-save"></i> حفظ</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     JAVASCRIPT
+══════════════════════════════════════════ -->
+<script>
+// ══════════════════════════════════════════
+//  CONFIG & STATE
+// ══════════════════════════════════════════
+const API = window.location.origin + '/api';
+let TOKEN = localStorage.getItem('erp_token') || '';
+let currentModule = 'dashboard';
+let currentUser = null;
+let charts = {};
+
+// Cache
+let _customers = [];
+let _suppliers = [];
+let _products  = [];
+let _warehouses = [];
+let _employees  = [];
+let _departments = [];
+
+// PWA
+let deferredPrompt = null;
+
+// ══════════════════════════════════════════
+//  API HELPER
+// ══════════════════════════════════════════
+async function api(path, method = 'GET', body = null) {
+  try {
+    const opts = {
+      method,
+      headers: {
+        'Content-Type': 'application/json',
+        ...(TOKEN ? { 'Authorization': `Bearer ${TOKEN}` } : {})
+      }
+    };
+    if (body && method !== 'GET') opts.body = JSON.stringify(body);
+    const res = await fetch(API + path, opts);
+
+    if (res.status === 401) { doLogout(); return null; }
+
+    const data = await res.json();
+    if (!res.ok) {
+      showToast(data.message || 'حدث خطأ', 'error');
+      return null;
+    }
+    setApiStatus(true);
+    return data;
+  } catch (e) {
+    setApiStatus(false);
+    if (e.message.includes('fetch') || e.message.includes('network')) {
+      showToast('تعذر الاتصال بالخادم', 'error');
+    } else {
+      showToast(e.message, 'error');
+    }
+    return null;
+  }
+}
+
+function setApiStatus(online) {
+  const el = document.getElementById('apiStatus');
+  if (!el) return;
+  if (online) {
+    el.style.background = '#d1fae5'; el.style.color = '#065f46';
+    el.innerHTML = '<span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span><span>متصل</span>';
+  } else {
+    el.style.background = '#fee2e2'; el.style.color = '#991b1b';
+    el.innerHTML = '<span class="w-2 h-2 bg-red-500 rounded-full"></span><span>غير متصل</span>';
+  }
+}
+
+// ══════════════════════════════════════════
+//  AUTH
+// ══════════════════════════════════════════
+async function doLogin() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const password = document.getElementById('loginPassword').value;
+  const btn = document.getElementById('loginBtn');
+  const errEl = document.getElementById('loginError');
+
+  if (!email || !password) { showLoginErr('يرجى إدخال البريد وكلمة المرور'); return; }
+
+  btn.disabled = true;
+  btn.innerHTML = '<div class="spinner spinner-sm"></div> جاري الدخول...';
+  errEl.classList.add('hidden');
+
+  const data = await api('/auth/login', 'POST', { email, password });
+
+  btn.disabled = false;
+  btn.innerHTML = '<i class="fas fa-sign-in-alt"></i> تسجيل الدخول';
+
+  if (!data?.token) { showLoginErr(data?.message || 'بيانات غير صحيحة'); return; }
+
+  TOKEN = data.token;
+  currentUser = data.user;
+  localStorage.setItem('erp_token', TOKEN);
+
+  document.getElementById('userName').textContent = data.user.name;
+  document.getElementById('userRole').textContent = roleAr(data.user.role);
+  document.getElementById('userAvatar').textContent = data.user.name[0];
+
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('mainApp').style.display = 'flex';
+
+  // Load initial data
+  await Promise.all([preloadCache()]);
+  loadDashboard();
+  checkNotifications();
+  applyPermissions();
+  loadCountries();
+}
+
+function showLoginErr(msg) {
+  document.getElementById('loginErrorMsg').textContent = msg;
+  document.getElementById('loginError').classList.remove('hidden');
+}
+
+function doLogout() {
+  TOKEN = '';
+  currentUser = null;
+  localStorage.removeItem('erp_token');
+  document.getElementById('mainApp').style.display = 'none';
+  document.getElementById('loginScreen').style.display = 'flex';
+}
+
+function roleAr(r) {
+  const m = { admin:'مدير النظام', accountant:'محاسب', sales:'مبيعات', warehouse:'مخازن', hr:'موارد بشرية' };
+  return m[r] || r;
+}
+
+// Auto-login
+if (TOKEN) {
+  (async () => {
+    const me = await api('/auth/me');
+    if (me) {
+      currentUser = me;
+      document.getElementById('userName').textContent = me.name;
+      document.getElementById('userRole').textContent = roleAr(me.role);
+      document.getElementById('userAvatar').textContent = me.name[0];
+      document.getElementById('loginScreen').style.display = 'none';
+      document.getElementById('mainApp').style.display = 'flex';
+      await preloadCache();
+      loadDashboard();
+      applyPermissions();
+    } else {
+      TOKEN = ''; localStorage.removeItem('erp_token');
+    }
+  })();
+}
+
+// ══════════════════════════════════════════
+//  PRELOAD CACHE
+// ══════════════════════════════════════════
+async function preloadCache() {
+  const [custs, supps, prods, whs, emps, depts] = await Promise.all([
+    api('/customers'), api('/suppliers'),
+    api('/warehouse/products'), api('/warehouse/warehouses'),
+    api('/hr/employees'), api('/hr/departments'),
+    loadCountries()
+  ]);
+  if (custs)  _customers   = custs;
+  if (supps)  _suppliers   = supps;
+  if (prods)  _products    = prods;
+  if (whs)    _warehouses  = whs;
+  if (emps)   _employees   = emps;
+  if (depts)  _departments = depts;
+}
+
+// ══════════════════════════════════════════
+//  NAVIGATION
+// ══════════════════════════════════════════
+const modTitles = {
+  dashboard:'لوحة التحكم', invoices:'الفواتير', accounts:'دليل الحسابات',
+  sales:'أوامر البيع', purchases:'أوامر الشراء', customers:'العملاء', suppliers:'الموردون',
+  products:'المنتجات', movements:'حركة المخزون', employees:'الموظفون',
+  leaves:'الإجازات', payroll:'مسير الرواتب'
+};
+
+const modLoaders = {
+  dashboard:loadDashboard, invoices:loadInvoices, accounts:loadAccounts,
+  sales:loadSales, purchases:loadPurchases, customers:loadCustomers,
+  suppliers:loadSuppliers, products:loadProducts, movements:loadMovements,
+  employees:loadEmployees, leaves:loadLeaves, payroll:loadPayroll
+};
+
+function showModule(name, btn) {
+  document.querySelectorAll('.module').forEach(m => m.classList.remove('active'));
+  document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+
+  const el = document.getElementById(name);
+  if (el) el.classList.add('active');
+  if (btn) btn.classList.add('active');
+
+  document.getElementById('pageTitle').textContent = modTitles[name] || name;
+  document.getElementById('pageBreadcrumb').textContent = `الرئيسية / ${modTitles[name]}`;
+  currentModule = name;
+
+  if (modLoaders[name]) modLoaders[name]();
+}
+
+function refreshModule() {
+  const icon = document.getElementById('refreshIcon');
+  icon.classList.add('fa-spin');
+  setTimeout(() => icon.classList.remove('fa-spin'), 800);
+  if (modLoaders[currentModule]) modLoaders[currentModule]();
+}
+
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('collapsed');
+}
+
+// ══════════════════════════════════════════
+//  DASHBOARD
+// ══════════════════════════════════════════
+async function loadDashboard() {
+  const el = document.getElementById('dashboardContent');
+  el.innerHTML = '<div class="loader"><div class="spinner"></div><p>جاري التحميل...</p></div>';
+
+  const [dash, monthly] = await Promise.all([
+    api('/reports/dashboard'),
+    api('/reports/monthly')
+  ]);
+  if (!dash) return;
+
+  const profitPct = dash.revenue > 0 ? ((dash.net_profit / dash.revenue) * 100).toFixed(1) : 0;
+
+  el.innerHTML = `
+    <!-- KPIs -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div class="kpi" style="background:linear-gradient(135deg,#1d4ed8,#1e40af)">
+        <p class="text-sm opacity-80 mb-1">إجمالي الإيرادات</p>
+        <h3 class="text-2xl font-bold">${fmt(dash.revenue)}</h3>
+        <p class="text-xs opacity-70 mt-1">الفواتير المدفوعة</p>
+        <i class="fas fa-chart-line absolute top-4 left-4 text-3xl opacity-20"></i>
+      </div>
+      <div class="kpi" style="background:linear-gradient(135deg,#dc2626,#b91c1c)">
+        <p class="text-sm opacity-80 mb-1">إجمالي المصروفات</p>
+        <h3 class="text-2xl font-bold">${fmt(dash.expenses)}</h3>
+        <p class="text-xs opacity-70 mt-1">أوامر الشراء المستلمة</p>
+        <i class="fas fa-shopping-bag absolute top-4 left-4 text-3xl opacity-20"></i>
+      </div>
+      <div class="kpi" style="background:linear-gradient(135deg,#059669,#047857)">
+        <p class="text-sm opacity-80 mb-1">صافي الربح</p>
+        <h3 class="text-2xl font-bold">${fmt(dash.net_profit)}</h3>
+        <p class="text-xs opacity-70 mt-1">هامش ${profitPct}%</p>
+        <i class="fas fa-wallet absolute top-4 left-4 text-3xl opacity-20"></i>
+      </div>
+      <div class="kpi" style="background:linear-gradient(135deg,#d97706,#b45309)">
+        <p class="text-sm opacity-80 mb-1">تنبيهات المخزون</p>
+        <h3 class="text-2xl font-bold">${dash.stock_alerts.length} منتج</h3>
+        <p class="text-xs opacity-70 mt-1">يحتاج إعادة طلب</p>
+        <i class="fas fa-exclamation-triangle absolute top-4 left-4 text-3xl opacity-20"></i>
+      </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+      <div class="card lg:col-span-2">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="section-title">الإيرادات والمصروفات الشهرية</h3>
+          <span class="text-xs text-muted">${new Date().getFullYear()}</span>
+        </div>
+        <div style="height:220px; position:relative">
+          <canvas id="revChart"></canvas>
+        </div>
+      </div>
+      <div class="card">
+        <h3 class="section-title mb-4">حالة الموظفين</h3>
+        <div style="height:160px; position:relative; margin-bottom:16px">
+          <canvas id="empChart"></canvas>
+        </div>
+        <div class="space-y-2">
+          ${dash.employee_stats.map((s,i) => {
+            const colors = ['#059669','#1d4ed8','#dc2626','#d97706'];
+            return `<div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <span class="w-3 h-3 rounded-full" style="background:${colors[i%colors.length]}"></span>
+                <span class="text-sm">${s.status}</span>
+              </div>
+              <span class="font-bold">${s.count}</span>
+            </div>`;
+          }).join('')}
+          <div class="flex items-center justify-between text-sm border-t pt-2 mt-2" style="border-color:var(--border)">
+            <span class="text-muted">إجازات معلقة</span>
+            <span class="badge badge-warning">${dash.pending_leaves}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Alerts & Quick Actions -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <!-- Stock Alerts -->
+      <div class="card">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="section-title">⚠️ تنبيهات المخزون</h3>
+          <button onclick="showModule('products',document.querySelector('[onclick*=products]'))" class="btn btn-outline btn-sm">عرض الكل</button>
+        </div>
+        ${dash.stock_alerts.length === 0
+          ? '<div class="empty-state py-8"><i class="fas fa-check-circle text-green-400" style="font-size:36px;opacity:1"></i><p>المخزون في وضع جيد ✓</p></div>'
+          : dash.stock_alerts.slice(0,5).map(p => `
+            <div class="flex justify-between items-center py-2.5" style="border-bottom:1px solid var(--border)">
+              <div>
+                <p class="font-semibold text-sm">${p.name}</p>
+                <p class="text-xs text-muted">متوفر: ${p.qty} / الحد: ${p.min_quantity}</p>
+              </div>
+              ${+p.qty === 0
+                ? '<span class="badge badge-danger">نفد</span>'
+                : '<span class="badge badge-warning">منخفض</span>'}
+            </div>`).join('')}
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="card">
+        <h3 class="section-title mb-4">⚡ إجراءات سريعة</h3>
+        <div class="grid grid-cols-2 gap-3">
+          <button onclick="showModule('invoices'); setTimeout(()=>{ openModal('invoiceModal'); prepareInvoiceModal(); },200)"
+            class="flex flex-col items-center gap-2 p-4 rounded-xl transition-all hover:scale-105"
+            style="background:#dbeafe; color:#1e40af">
+            <i class="fas fa-file-invoice text-2xl"></i>
+            <span class="text-sm font-semibold">فاتورة جديدة</span>
+          </button>
+          <button onclick="showModule('sales'); setTimeout(()=>{ openModal('salesModal'); prepareSalesModal(); },200)"
+            class="flex flex-col items-center gap-2 p-4 rounded-xl transition-all hover:scale-105"
+            style="background:#d1fae5; color:#065f46">
+            <i class="fas fa-shopping-cart text-2xl"></i>
+            <span class="text-sm font-semibold">أمر بيع</span>
+          </button>
+          <button onclick="showModule('products'); setTimeout(()=>{ openModal('productModal'); resetProductModal(); },200)"
+            class="flex flex-col items-center gap-2 p-4 rounded-xl transition-all hover:scale-105"
+            style="background:#fef9c3; color:#92400e">
+            <i class="fas fa-plus-circle text-2xl"></i>
+            <span class="text-sm font-semibold">منتج جديد</span>
+          </button>
+          <button onclick="showModule('employees'); setTimeout(()=>{ openModal('employeeModal'); resetEmployeeModal(); },200)"
+            class="flex flex-col items-center gap-2 p-4 rounded-xl transition-all hover:scale-105"
+            style="background:#ede9fe; color:#5b21b6">
+            <i class="fas fa-user-plus text-2xl"></i>
+            <span class="text-sm font-semibold">موظف جديد</span>
+          </button>
+        </div>
+      </div>
+    </div>`;
+
+  // Draw Charts
+  if (monthly) drawRevenueChart(monthly);
+  drawEmpChart(dash.employee_stats);
+}
+
+function drawRevenueChart(data) {
+  const months = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+  const revMap = {}, expMap = {};
+  data.revenues?.forEach(r => revMap[r.month] = +r.amount);
+  data.expenses?.forEach(e => expMap[e.month] = +e.amount);
+  const labels = [...new Set([...Object.keys(revMap),...Object.keys(expMap)])].sort();
+  const ctx = document.getElementById('revChart');
+  if (!ctx) return;
+  if (charts.rev) charts.rev.destroy();
+  charts.rev = new Chart(ctx, {
+    type:'bar',
+    data:{
+      labels: labels.map(l => months[+l.split('-')[1]-1] || l),
+      datasets:[
+        { label:'الإيرادات', data:labels.map(l=>revMap[l]||0), backgroundColor:'rgba(29,78,216,0.8)', borderRadius:6 },
+        { label:'المصروفات', data:labels.map(l=>expMap[l]||0), backgroundColor:'rgba(220,38,38,0.7)', borderRadius:6 }
+      ]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{position:'top',labels:{font:{family:'Tajawal'},boxWidth:12}}},
+      scales:{y:{beginAtZero:true, ticks:{callback:v=>(v/1000).toFixed(0)+'k',font:{family:'Tajawal'}}}}
+    }
+  });
+}
+
+function drawEmpChart(stats) {
+  const ctx = document.getElementById('empChart');
+  if (!ctx) return;
+  if (charts.emp) charts.emp.destroy();
+  charts.emp = new Chart(ctx, {
+    type:'doughnut',
+    data:{
+      labels:stats.map(s=>s.status),
+      datasets:[{data:stats.map(s=>s.count), backgroundColor:['#059669','#1d4ed8','#dc2626','#d97706'], borderWidth:0}]
+    },
+    options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, cutout:'70%'}
+  });
+}
+
+// ══════════════════════════════════════════
+//  INVOICES
+// ══════════════════════════════════════════
+async function loadInvoices() {
+  const status = document.getElementById('invStatusFilter')?.value || '';
+  const el = document.getElementById('invoicesContent');
+  el.innerHTML = '<div class="loader"><div class="spinner"></div></div>';
+
+  const data = await api('/invoices' + (status ? `?status=${encodeURIComponent(status)}` : ''));
+  if (!data) return;
+
+  // Stats
+  const stats = {مدفوعة:0, معلقة:0, متأخرة:0, مسودة:0};
+  data.forEach(i => { if(stats[i.status] !== undefined) stats[i.status]++; });
+  const invStatsEl = document.getElementById('invStats');
+  if (invStatsEl) invStatsEl.innerHTML = [
+    ['مدفوعة', stats['مدفوعة'], '#d1fae5', '#065f46', 'fa-check-circle'],
+    ['معلقة',  stats['معلقة'],  '#fef9c3', '#92400e', 'fa-clock'],
+    ['متأخرة', stats['متأخرة'], '#fee2e2', '#991b1b', 'fa-exclamation-circle'],
+    ['مسودة',  stats['مسودة'],  '#f1f5f9', '#475569', 'fa-file'],
+  ].map(([l,v,bg,col,ico]) => `
+    <div class="card py-3 px-4 flex items-center gap-3" style="background:${bg}">
+      <i class="fas ${ico}" style="color:${col};font-size:20px"></i>
+      <div><p class="text-2xl font-bold" style="color:${col}">${v}</p><p class="text-xs" style="color:${col};opacity:0.8">${l}</p></div>
+    </div>`).join('');
+
+  if (!data.length) {
+    el.innerHTML = '<div class="empty-state"><i class="fas fa-file-invoice"></i><p>لا توجد فواتير</p></div>';
+    return;
+  }
+
+  el.innerHTML = `
+    <div class="table-wrap">
+      <table id="invoiceTable">
+        <thead><tr>
+          <th>رقم الفاتورة</th><th>العميل</th><th>التاريخ</th>
+          <th>الاستحقاق</th><th>قبل الضريبة</th><th>الضريبة</th>
+          <th>الإجمالي</th><th>الحالة</th><th>إجراءات</th>
+        </tr></thead>
+        <tbody>
+          ${data.map(i => `
+            <tr>
+              <td class="font-mono font-bold" style="color:#1d4ed8">${i.invoice_number}</td>
+              <td class="font-semibold">${i.customer_name}</td>
+              <td class="text-muted">${i.date}</td>
+              <td class="text-muted">${i.due_date || '-'}</td>
+              <td>${fmt(i.subtotal)}</td>
+              <td class="text-muted">${fmt(i.tax_amount)}</td>
+              <td class="font-bold">${fmt(i.total)}</td>
+              <td>${badge(i.status)}</td>
+              <td>
+                <div class="flex gap-1">
+                  ${i.status !== 'مدفوعة' ? `
+                    <button onclick="changeInvStatus(${i.id},'مدفوعة')" class="btn btn-sm btn-success" title="تحديد كمدفوعة">
+                      <i class="fas fa-check"></i>
+                    </button>` : ''}
+                  <button onclick="changeInvStatus(${i.id},'ملغاة')" class="btn btn-sm btn-danger" title="إلغاء">
+                    <i class="fas fa-times"></i>
+                  </button>
+                  <button onclick="printInvoice(${i.id})" class="btn btn-sm btn-ghost text-blue-600" title="طباعة PDF">
+                    <i class="fas fa-print"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+async function prepareInvoiceModal() {
+  document.getElementById('inv_date').value = today();
+  document.getElementById('inv_tax').value = '15';
+  document.getElementById('invLinesContainer').innerHTML = '';
+  addInvLine();
+  // Load customers
+  const sel = document.getElementById('inv_cust');
+  sel.innerHTML = '<option value="">اختر العميل...</option>' +
+    _customers.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+  calcInvTotal();
+}
+
+function addInvLine() {
+  const container = document.getElementById('invLinesContainer');
+  const div = document.createElement('div');
+  div.className = 'grid gap-1 items-center';
+  div.style.gridTemplateColumns = '3fr 1fr 1.5fr 1.5fr auto';
+  div.innerHTML = `
+    <input placeholder="البيان" name="desc" class="input" style="font-size:13px;padding:8px 10px">
+    <input type="number" name="qty" value="1" class="input" style="font-size:13px;padding:8px 6px" oninput="calcInvTotal()">
+    <input type="number" name="price" value="0" class="input" style="font-size:13px;padding:8px 6px" oninput="calcInvTotal()">
+    <input name="total" readonly class="input text-muted" style="font-size:13px;padding:8px 6px;background:var(--bg-base)">
+    <button onclick="this.parentElement.remove();calcInvTotal()" class="btn btn-ghost btn-icon text-danger"><i class="fas fa-trash text-sm"></i></button>`;
+  container.appendChild(div);
+}
+
+function calcInvTotal() {
+  let sub = 0;
+  document.querySelectorAll('#invLinesContainer > div').forEach(row => {
+    const qty = +row.querySelector('[name=qty]').value || 0;
+    const price = +row.querySelector('[name=price]').value || 0;
+    const t = qty * price; sub += t;
+    row.querySelector('[name=total]').value = t.toLocaleString();
+  });
+  const taxR = +document.getElementById('inv_tax').value || 14;
+  const whtR = +document.getElementById('inv_withhold').value || 0;
+
+  const taxA = sub * taxR / 100;
+  const whtA = sub * whtR / 100;
+  const finalTotal = sub + taxA - whtA;
+
+  setText('inv_sub', fmt(sub));
+  setText('inv_taxamt', fmt(taxA) + (whtA > 0 ? ` (خصم 1%: -${fmt(whtA)})` : ''));
+  setText('inv_tot', fmt(finalTotal));
+}
+
+async function saveInvoice(issue = true) {
+  const cust = document.getElementById('inv_cust').value;
+  if (!cust) { showToast('اختر العميل أولاً', 'error'); return; }
+
+  const lines = [...document.querySelectorAll('#invLinesContainer > div')].map(r => ({
+    description: r.querySelector('[name=desc]').value,
+    quantity: +r.querySelector('[name=qty]').value,
+    unit_price: +r.querySelector('[name=price]').value,
+  })).filter(l => l.description && l.quantity > 0);
+
+  if (!lines.length) { showToast('أضف بنداً واحداً على الأقل', 'error'); return; }
+
+  const res = await api('/invoices', 'POST', {
+    customer_id: +cust,
+    date: document.getElementById('inv_date').value || today(),
+    due_date: document.getElementById('inv_due').value,
+    tax_rate: +document.getElementById('inv_tax').value || 15,
+    notes: document.getElementById('inv_notes')?.value,
+    lines,
+    withholding_tax: +document.getElementById('inv_withhold').value || 0,
+    status: issue ? 'معلقة' : 'مسودة'
+  });
+
+  if (!res) return;
+  showToast(`✅ تم إنشاء ${res.invoice_number}`, 'success');
+  closeModal('invoiceModal');
+  loadInvoices();
+}
+
+async function changeInvStatus(id, status) {
+  const labels = { 'مدفوعة': 'تحديد هذه الفاتورة كمدفوعة؟', 'ملغاة': 'إلغاء هذه الفاتورة؟' };
+  const ok = await confirm(labels[status] || `تغيير الحالة إلى ${status}؟`);
+  if (!ok) return;
+  const res = await api(`/invoices/${id}/status`, 'PATCH', { status });
+  if (res) { showToast('تم تحديث الحالة', 'success'); loadInvoices(); }
+}
+
+// ══════════════════════════════════════════
+//  ACCOUNTS
+// ══════════════════════════════════════════
+async function loadAccounts() {
+  const el = document.getElementById('accountsContent');
+  el.innerHTML = '<div class="loader"><div class="spinner"></div></div>';
+  const data = await api('/accounts');
+  if (!data) return;
+
+  // Summary
+  const types = {};
+  data.forEach(a => { types[a.type] = (types[a.type]||0) + +a.balance; });
+  const colors = { أصول:'#dbeafe|#1e40af', خصوم:'#fee2e2|#991b1b', إيرادات:'#d1fae5|#065f46', مصروفات:'#fef9c3|#92400e', 'حقوق ملكية':'#ede9fe|#5b21b6' };
+  document.getElementById('accSummary').innerHTML = Object.entries(types).map(([t,v]) => {
+    const [bg,col] = (colors[t]||'#f1f5f9|#475569').split('|');
+    return `<div class="card py-3 px-4" style="background:${bg};border-color:${col}22">
+      <p class="text-xs font-bold mb-1" style="color:${col}">${t}</p>
+      <p class="text-xl font-bold" style="color:${col}">${fmt(v)}</p>
+    </div>`;
+  }).join('');
+
+  el.innerHTML = `
+    <div class="table-wrap">
+      <table id="accountsTable">
+        <thead><tr><th>الكود</th><th>الحساب</th><th>النوع</th><th>الطبيعة</th><th>الرصيد</th><th></th></tr></thead>
+        <tbody>
+          ${data.map(a => `<tr>
+            <td class="font-mono font-bold" style="color:#b45309">${a.code}</td>
+            <td class="font-semibold">${a.name}</td>
+            <td>${badge(a.type, 'type')}</td>
+            <td><span class="badge ${a.nature==='مدين'?'badge-info':'badge-danger'}">${a.nature}</span></td>
+            <td class="font-bold">${fmt(a.balance)}</td>
+            <td><button onclick="editAccount(${a.id})" class="btn btn-ghost btn-icon btn-sm text-muted"><i class="fas fa-edit"></i></button></td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+async function saveAccount() {
+  const code = document.getElementById('acc_code').value.trim();
+  const name = document.getElementById('acc_name').value.trim();
+  
+  if (!code || !name) { 
+    showToast('الكود والاسم مطلوبان', 'error'); 
+    return; 
+  }
+
+  // تجميع باقي البيانات من النافذة
+  const payload = {
+    code: code,
+    name: name,
+    type: document.getElementById('acc_type').value,
+    nature: document.getElementById('acc_nature').value,
+    balance: +document.getElementById('acc_balance').value || 0
+  };
+
+  // إرسال البيانات للباك إند
+  const res = await api('/accounts', 'POST', payload);
+  if (!res) return;
+
+  showToast('✅ تم حفظ الحساب بنجاح', 'success');
+  closeModal('accountModal');
+  loadAccounts(); // عشان الجدول يتحدث ويظهر الحساب الجديد
+}
+
+// ══════════════════════════════════════════
+//  SALES
+// ══════════════════════════════════════════
+async function loadSales(status = '') {
+  const el = document.getElementById('salesContent');
+  el.innerHTML = '<div class="loader"><div class="spinner"></div></div>';
+  const data = await api('/orders/sales' + (status ? `?status=${encodeURIComponent(status)}` : ''));
+  if (!data) return;
+
+  if (!data.length) { el.innerHTML = '<div class="empty-state"><i class="fas fa-shopping-cart"></i><p>لا توجد أوامر بيع</p></div>'; return; }
+
+  el.innerHTML = `
+    <div class="table-wrap">
+      <table id="salesTable">
+        <thead><tr><th>رقم الأمر</th><th>العميل</th><th>التاريخ</th><th>التسليم</th><th>الإجمالي</th><th>الحالة</th><th>إجراءات</th></tr></thead>
+        <tbody>
+          ${data.map(o => `<tr>
+            <td class="font-mono font-bold" style="color:#059669">${o.order_number}</td>
+            <td class="font-semibold">${o.customer_name}</td>
+            <td class="text-muted">${o.date}</td>
+            <td class="text-muted">${o.delivery_date||'-'}</td>
+            <td class="font-bold">${fmt(o.total)}</td>
+            <td>${badge(o.status)}</td>
+            <td>
+              <select class="input" style="font-size:12px;padding:5px 8px;width:auto" onchange="changeSalesStatus(${o.id},this.value);this.value=''">
+                <option value="">-- تغيير --</option>
+                <option value="مؤكد">مؤكد</option>
+                <option value="جاري التوصيل">جاري التوصيل</option>
+                <option value="مُسلَّم">مُسلَّم</option>
+                <option value="ملغي">ملغي</option>
+              </select>
+            </td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+async function prepareSalesModal() {
+  document.getElementById('so_date').value = today();
+  document.getElementById('soLinesContainer').innerHTML = '';
+  addSOLine();
+  document.getElementById('so_cust').innerHTML =
+    '<option value="">اختر...</option>' + _customers.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
+}
+
+function addSOLine() {
+  const c = document.getElementById('soLinesContainer');
+  const d = document.createElement('div');
+  d.className = 'grid gap-1 items-center';
+  d.style.gridTemplateColumns = '3fr 1fr 1.5fr 1.5fr auto';
+  d.innerHTML = `
+    <select name="prod" class="input" style="font-size:13px;padding:8px 6px" onchange="autoFillPrice(this)">
+      <option value="">اختر المنتج...</option>
+      ${_products.map(p=>`<option value="${p.id}" data-price="${p.sale_price}">${p.name} (${p.total_qty||0})</option>`).join('')}
+    </select>
+    <input type="number" name="qty" value="1" class="input" style="font-size:13px;padding:8px 6px" oninput="calcSOTotal()">
+    <input type="number" name="price" value="0" class="input" style="font-size:13px;padding:8px 6px" oninput="calcSOTotal()">
+    <input name="total" readonly class="input text-muted" style="font-size:13px;padding:8px 6px;background:var(--bg-base)">
+    <button onclick="this.parentElement.remove();calcSOTotal()" class="btn btn-ghost btn-icon text-danger"><i class="fas fa-trash text-sm"></i></button>`;
+  c.appendChild(d);
+}
+
+function autoFillPrice(sel) {
+  const price = sel.options[sel.selectedIndex]?.dataset.price || 0;
+  sel.parentElement.querySelector('[name=price]').value = price;
+  calcSOTotal();
+}
+
+function calcSOTotal() {
+  let sub = 0;
+  document.querySelectorAll('#soLinesContainer > div').forEach(r => {
+    const qty = +r.querySelector('[name=qty]').value||0;
+    const price = +r.querySelector('[name=price]').value||0;
+    const t = qty*price; sub += t;
+    r.querySelector('[name=total]').value = t.toLocaleString();
+  });
+  setText('so_tot', fmt(sub*1.15));
+}
+
+async function saveSalesOrder() {
+  const cust = document.getElementById('so_cust').value;
+  if (!cust) { showToast('اختر العميل', 'error'); return; }
+  const lines = [...document.querySelectorAll('#soLinesContainer > div')].map(r => ({
+    product_id: +r.querySelector('[name=prod]').value,
+    quantity: +r.querySelector('[name=qty]').value,
+    unit_price: +r.querySelector('[name=price]').value,
+  })).filter(l => l.product_id && l.quantity > 0);
+  if (!lines.length) { showToast('أضف منتجاً على الأقل', 'error'); return; }
+  const res = await api('/orders/sales', 'POST', {
+    customer_id: +cust,
+    date: document.getElementById('so_date').value || today(),
+    delivery_date: document.getElementById('so_delivery').value,
+    notes: document.getElementById('so_notes').value,
+    lines
+  });
+  if (!res) return;
+  showToast(`✅ تم إنشاء ${res.order_number}`, 'success');
+  closeModal('salesModal');
+  loadSales();
+}
+
+async function changeSalesStatus(id, status) {
+  if (!status) return;
+  const res = await api(`/orders/sales/${id}/status`, 'PATCH', { status });
+  if (res) { showToast('تم تحديث الحالة', 'success'); loadSales(); }
+}
+
+// ══════════════════════════════════════════
+//  PURCHASES
+// ══════════════════════════════════════════
+async function loadPurchases() {
+  const el = document.getElementById('purchasesContent');
+  el.innerHTML = '<div class="loader"><div class="spinner"></div></div>';
+  const data = await api('/orders/purchases');
+  if (!data) return;
+
+  if (!data.length) { el.innerHTML = '<div class="empty-state"><i class="fas fa-shopping-bag"></i><p>لا توجد أوامر شراء</p></div>'; return; }
+
+  el.innerHTML = `
+    <div class="table-wrap">
+      <table id="purchasesTable">
+        <thead><tr><th>رقم الأمر</th><th>المورد</th><th>التاريخ</th><th>الاستلام المتوقع</th><th>الإجمالي</th><th>الحالة</th><th>إجراءات</th></tr></thead>
+        <tbody>
+          ${data.map(o => `<tr>
+            <td class="font-mono font-bold" style="color:#7c3aed">${o.order_number}</td>
+            <td class="font-semibold">${o.supplier_name}</td>
+            <td class="text-muted">${o.date}</td>
+            <td class="text-muted">${o.expected_date||'-'}</td>
+            <td class="font-bold">${fmt(o.total)}</td>
+            <td>${badge(o.status)}</td>
+            <td>
+              <select class="input" style="font-size:12px;padding:5px 8px;width:auto" onchange="changePurchaseStatus(${o.id},this.value);this.value=''">
+                <option value="">-- تغيير --</option>
+                <option value="معتمد">معتمد</option>
+                <option value="في الطريق">في الطريق</option>
+                <option value="مُستلَم">مُستلَم ✓</option>
+              </select>
+            </td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+async function preparePurchaseModal() {
+  document.getElementById('po_date').value = today();
+  document.getElementById('poLinesContainer').innerHTML = '';
+  addPOLine();
+  document.getElementById('po_supp').innerHTML =
+    '<option value="">اختر...</option>' + _suppliers.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
+}
+
+function addPOLine() {
+  const c = document.getElementById('poLinesContainer');
+  const d = document.createElement('div');
+  d.className = 'grid gap-1 items-center';
+  d.style.gridTemplateColumns = '3fr 1fr 1.5fr 1.5fr auto';
+  d.innerHTML = `
+    <select name="prod" class="input" style="font-size:13px;padding:8px 6px">
+      <option value="">اختر المنتج...</option>
+      ${_products.map(p=>`<option value="${p.id}" data-price="${p.cost_price}">${p.name}</option>`).join('')}
+    </select>
+    <input type="number" name="qty" value="1" class="input" style="font-size:13px;padding:8px 6px" oninput="calcPOTotal()">
+    <input type="number" name="price" value="0" class="input" style="font-size:13px;padding:8px 6px" oninput="calcPOTotal()">
+    <input name="total" readonly class="input" style="font-size:13px;padding:8px 6px;background:var(--bg-base)">
+    <button onclick="this.parentElement.remove();calcPOTotal()" class="btn btn-ghost btn-icon text-danger"><i class="fas fa-trash text-sm"></i></button>`;
+  c.appendChild(d);
+}
+
+function calcPOTotal() {
+  let sub = 0;
+  document.querySelectorAll('#poLinesContainer > div').forEach(r => {
+    const qty=+r.querySelector('[name=qty]').value||0, price=+r.querySelector('[name=price]').value||0;
+    const t=qty*price; sub+=t; r.querySelector('[name=total]').value=t.toLocaleString();
+  });
+  setText('po_tot', fmt(sub*1.15));
+}
+
+async function savePurchaseOrder() {
+  const supp = document.getElementById('po_supp').value;
+  if (!supp) { showToast('اختر المورد', 'error'); return; }
+  const lines = [...document.querySelectorAll('#poLinesContainer > div')].map(r=>({
+    product_id:+r.querySelector('[name=prod]').value,
+    quantity:+r.querySelector('[name=qty]').value,
+    unit_price:+r.querySelector('[name=price]').value,
+  })).filter(l=>l.product_id&&l.quantity>0);
+  if (!lines.length) { showToast('أضف منتجاً', 'error'); return; }
+  const res = await api('/orders/purchases', 'POST', {
+    supplier_id:+supp,
+    date:document.getElementById('po_date').value||today(),
+    expected_date:document.getElementById('po_expected').value,
+    notes:document.getElementById('po_notes').value,
+    lines
+  });
+  if (!res) return;
+  showToast(`✅ تم إنشاء ${res.order_number}`, 'success');
+  closeModal('purchaseModal');
+  loadPurchases();
+}
+
+async function changePurchaseStatus(id, status) {
+  if (!status) return;
+  const res = await api(`/orders/purchases/${id}/status`, 'PATCH', { status });
+  if (res) {
+    showToast(status==='مُستلَم' ? '✅ تم الاستلام وتحديث المخزون' : 'تم تحديث الحالة', 'success');
+    loadPurchases();
+    if (status==='مُستلَم') _products = await api('/warehouse/products') || _products;
+  }
+}
+
+// ══════════════════════════════════════════
+//  CUSTOMERS
+// ══════════════════════════════════════════
+async function loadCustomers(search='') {
+  const el = document.getElementById('customersContent');
+  el.innerHTML = '<div class="loader"><div class="spinner"></div></div>';
+  const data = await api('/customers' + (search?`?search=${encodeURIComponent(search)}`:''));
+  if (!data) return;
+  _customers = data;
+
+  if (!data.length) { el.innerHTML = '<div class="empty-state"><i class="fas fa-user-tie"></i><p>لا يوجد عملاء</p></div>'; return; }
+
+  el.innerHTML = `
+    <div class="table-wrap">
+      <table id="customersTable">
+        <thead><tr><th>الكود</th><th>الاسم</th><th>المدينة</th><th>الهاتف</th><th>الرصيد المستحق</th><th>الحالة</th><th></th></tr></thead>
+        <tbody>
+          ${data.map(c => `<tr>
+            <td class="font-mono text-xs text-muted">${c.code}</td>
+            <td class="font-bold">${c.name}</td>
+            <td class="text-muted">${c.city||'-'}</td>
+            <td>${c.phone||'-'}</td>
+            <td class="${+c.balance>0?'font-bold text-danger':''}">${fmt(c.balance)}</td>
+            <td>${badge(c.status)}</td>
+            <td>
+  <div class="flex gap-1">
+    <button onclick='editCustomer(${JSON.stringify(c).replace(/'/g,"\\'")})' class="btn btn-ghost btn-icon btn-sm" title="تعديل"><i class="fas fa-edit text-muted"></i></button>
+    <button onclick='deleteCustomer(${c.id}, "${c.name}")' class="btn btn-ghost btn-icon btn-sm text-danger" title="حذف"><i class="fas fa-trash"></i></button>
+  </div>
+</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+function resetCustomerModal() {
+  document.getElementById('cust_id').value = '';
+  document.getElementById('custModalTitle').textContent = 'عميل جديد';
+  ['cust_code','cust_name','cust_phone','cust_city','cust_email','cust_tax'].forEach(id => document.getElementById(id).value = '');
+}
+
+function editCustomer(c) {
+  document.getElementById('cust_id').value = c.id;
+  document.getElementById('custModalTitle').textContent = 'تعديل عميل';
+  document.getElementById('cust_code').value = c.code;
+  document.getElementById('cust_name').value = c.name;
+  document.getElementById('cust_phone').value = c.phone||'';
+  document.getElementById('cust_city').value = c.city||'';
+  document.getElementById('cust_email').value = c.email||'';
+  document.getElementById('cust_tax').value = c.tax_number||'';
+  openModal('customerModal');
+}
+
+async function saveCustomer() {
+  const code = document.getElementById('cust_code').value.trim();
+  const name = document.getElementById('cust_name').value.trim();
+  
+  if (!code || !name) { showToast('الكود والاسم مطلوبان', 'error'); return; }
+  
+  const res = await api('/customers', 'POST', {
+    code, name,
+    phone: document.getElementById('cust_phone').value,
+    email: document.getElementById('cust_email').value,
+    // --- البيانات الجديدة بتاعتنا ---
+    country: document.getElementById('contact_country').value,
+    state: document.getElementById('contact_state').value,
+    city: document.getElementById('contact_city').value,
+    zip_code: document.getElementById('contact_zip').value,
+    address: document.getElementById('contact_address').value
+  });
+
+  if (!res) return;
+  showToast('تم حفظ العميل', 'success');
+  closeModal('customerModal');
+  loadCustomers();
+}
+
+// ══════════════════════════════════════════
+//  SUPPLIERS
+// ══════════════════════════════════════════
+async function loadSuppliers(search='') {
+  const el = document.getElementById('suppliersContent');
+  el.innerHTML = '<div class="loader"><div class="spinner"></div></div>';
+  const data = await api('/suppliers' + (search?`?search=${encodeURIComponent(search)}`:''));
+  if (!data) return;
+  _suppliers = data;
+
+  el.innerHTML = `
+    <div class="table-wrap">
+      <table id="suppliersTable">
+        <thead><tr><th>الكود</th><th>الاسم</th><th>المدينة</th><th>الهاتف</th><th>التقييم</th><th>الرصيد</th><th></th></tr></thead>
+        <tbody>
+          ${data.map(s => `<tr>
+            <td class="font-mono text-xs text-muted">${s.code}</td>
+            <td class="font-bold">${s.name}</td>
+            <td class="text-muted">${s.city||'-'}</td>
+            <td>${s.phone||'-'}</td>
+            <td style="color:#d97706">${'★'.repeat(s.rating||0)}${'☆'.repeat(5-(s.rating||0))}</td>
+            <td class="${+s.balance>0?'font-bold text-danger':''}">${fmt(s.balance)}</td>
+            <td>
+  <div class="flex gap-1">
+    <button onclick='editSupplier(${JSON.stringify(s).replace(/'/g,"\\'")})' class="btn btn-ghost btn-icon btn-sm" title="تعديل"><i class="fas fa-edit text-muted"></i></button>
+    <button onclick='deleteSupplier(${s.id}, "${s.name}")' class="btn btn-ghost btn-icon btn-sm text-danger" title="حذف"><i class="fas fa-trash"></i></button>
+  </div>
+</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+function resetSupplierModal() {
+  ['supp_code','supp_name','supp_phone','supp_city'].forEach(id => document.getElementById(id).value='');
+}
+
+function editSupplier(s) {
+  document.getElementById('supp_code').value = s.code;
+  document.getElementById('supp_name').value = s.name;
+  document.getElementById('supp_phone').value = s.phone||'';
+  document.getElementById('supp_city').value = s.city||'';
+  document.getElementById('supp_rating').value = s.rating||3;
+  openModal('supplierModal');
+}
+
+async function saveSupplier() {
+  const code = document.getElementById('supp_code').value.trim();
+  const name = document.getElementById('supp_name').value.trim();
+  if (!code||!name) { showToast('الكود والاسم مطلوبان','error'); return; }
+  const res = await api('/suppliers','POST',{
+    code,name,
+    phone: document.getElementById('supp_phone').value,
+    city: document.getElementById('supp_city').value,
+    rating: +document.getElementById('supp_rating').value
+  });
+  if (!res) return;
+  showToast('✅ تم حفظ المورد','success');
+  closeModal('supplierModal');
+  loadSuppliers();
+}
+
+// ══════════════════════════════════════════
+//  PRODUCTS
+// ══════════════════════════════════════════
+async function loadProducts(lowOnly=false) {
+  const el = document.getElementById('productsContent');
+  el.innerHTML = '<div class="loader"><div class="spinner"></div></div>';
+  const data = await api('/warehouse/products' + (lowOnly?'?low_stock=true':''));
+  if (!data) return;
+  _products = data;
+
+  // Alerts
+  const alerts = data.filter(p=>p.status==='نفد'||p.status==='منخفض');
+  document.getElementById('productsAlerts').innerHTML = alerts.length
+    ? `<div class="p-3 rounded-xl mb-2 flex items-center gap-3 flex-wrap" style="background:#fef9c3;border:1px solid #d97706;color:#92400e">
+        <i class="fas fa-exclamation-triangle"></i>
+        <strong>${alerts.length} منتج يحتاج إعادة طلب:</strong>
+        ${alerts.map(p=>`<span class="badge badge-warning">${p.name} (${p.total_qty||0})</span>`).join('')}
+       </div>` : '';
+
+  el.innerHTML = `
+    <div class="table-wrap">
+      <table id="productsTable">
+        <thead><tr><th>الكود</th><th>المنتج</th><th>الفئة</th><th>الوحدة</th><th>التكلفة</th><th>البيع</th><th>المتاح</th><th>الحد</th><th>الحالة</th><th></th></tr></thead>
+        <tbody>
+          ${data.map(p => `<tr>
+            <td class="font-mono text-xs font-bold" style="color:#b45309">${p.code}</td>
+            <td class="font-bold">${p.name}</td>
+            <td class="text-muted text-xs">${p.category_name||'-'}</td>
+            <td class="text-muted">${p.unit}</td>
+            <td class="text-muted">${fmt(p.cost_price)}</td>
+            <td class="font-semibold" style="color:#059669">${fmt(p.sale_price)}</td>
+            <td class="font-bold text-base" style="color:${+p.total_qty===0?'#dc2626':+p.total_qty<=p.min_quantity?'#d97706':'#059669'}">${p.total_qty||0}</td>
+            <td class="text-muted">${p.min_quantity}</td>
+            <td>${badge(p.status||'متاح')}</td>
+            <td>
+              <button onclick='editProduct(${JSON.stringify(p).replace(/'/g,"\\'")})'
+                class="btn btn-ghost btn-icon btn-sm"><i class="fas fa-edit text-muted"></i></button>
+            </td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+function resetProductModal() {
+  document.getElementById('prod_id').value = '';
+  document.getElementById('prodModalTitle').textContent = 'منتج جديد';
+  ['prod_code','prod_name'].forEach(id => document.getElementById(id).value='');
+  document.getElementById('prod_cost').value='0';
+  document.getElementById('prod_price').value='0';
+  document.getElementById('prod_min').value='5';
+  // Load categories
+  const catSel = document.getElementById('prod_cat');
+  catSel.innerHTML = '<option value="">-- بدون فئة --</option>';
+  // Could load from API: api('/warehouse/categories')
+}
+
+function editProduct(p) {
+  document.getElementById('prod_id').value = p.id;
+  document.getElementById('prodModalTitle').textContent = 'تعديل منتج';
+  document.getElementById('prod_code').value = p.code;
+  document.getElementById('prod_name').value = p.name;
+  document.getElementById('prod_cost').value = p.cost_price;
+  document.getElementById('prod_price').value = p.sale_price;
+  document.getElementById('prod_min').value = p.min_quantity;
+  openModal('productModal');
+}
+
+async function saveProduct() {
+  const id = document.getElementById('prod_id').value;
+  const code = document.getElementById('prod_code').value.trim();
+  const name = document.getElementById('prod_name').value.trim();
+  if (!code||!name) { showToast('الكود والاسم مطلوبان','error'); return; }
+
+  const payload = {
+    code,name,
+    unit: document.getElementById('prod_unit').value,
+    cost_price: +document.getElementById('prod_cost').value,
+    sale_price: +document.getElementById('prod_price').value,
+    min_quantity: +document.getElementById('prod_min').value,
+  };
+
+  const res = id
+    ? await api(`/warehouse/products/${id}`,'PUT',payload)
+    : await api('/warehouse/products','POST',payload);
+
+  if (!res) return;
+  showToast(`✅ تم ${id?'تعديل':'إضافة'} المنتج`,'success');
+  closeModal('productModal');
+  loadProducts();
+}
+
+// ══════════════════════════════════════════
+//  MOVEMENTS
+// ══════════════════════════════════════════
+async function loadMovements() {
+  const el = document.getElementById('movementsContent');
+  el.innerHTML = '<div class="loader"><div class="spinner"></div></div>';
+  const data = await api('/warehouse/movements');
+  if (!data) return;
+
+  el.innerHTML = `
+    <div class="table-wrap">
+      <table id="movementsTable">
+        <thead><tr><th>رقم</th><th>التاريخ</th><th>المنتج</th><th>النوع</th><th>الكمية</th><th>المخزن</th><th>المرجع</th></tr></thead>
+        <tbody>
+          ${data.map(m => `<tr>
+            <td class="font-mono text-xs text-muted">${m.mov_number}</td>
+            <td class="text-muted">${m.created_at?.split('T')[0]||'-'}</td>
+            <td class="font-semibold">${m.product_name}</td>
+            <td>${m.type==='وارد'?'<span class="badge badge-info">↓ وارد</span>':'<span class="badge badge-purple">↑ صادر</span>'}</td>
+            <td class="font-bold ${m.type==='وارد'?'text-blue-600':'text-purple-600'}">${m.type==='وارد'?'+':'-'}${m.quantity}</td>
+            <td class="text-muted">${m.warehouse_name}</td>
+            <td class="text-muted">${m.reference||'-'}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+async function prepareMovementModal(type) {
+  document.getElementById('mov_type').value = type;
+  document.getElementById('movModalTitle').textContent = type === 'وارد' ? '⬇️ إضافة وارد' : '⬆️ إضافة صادر';
+  document.getElementById('mov_prod').innerHTML =
+    '<option value="">اختر المنتج...</option>' + _products.map(p=>`<option value="${p.id}">${p.name} (${p.total_qty||0})</option>`).join('');
+  document.getElementById('mov_wh').innerHTML =
+    '<option value="">اختر...</option>' + _warehouses.map(w=>`<option value="${w.id}">${w.name}</option>`).join('');
+  document.getElementById('mov_qty').value = 1;
+  document.getElementById('mov_ref').value = '';
+  document.getElementById('mov_notes').value = '';
+}
+
+async function saveMovement() {
+  const prod = document.getElementById('mov_prod').value;
+  const wh   = document.getElementById('mov_wh').value;
+  const qty  = +document.getElementById('mov_qty').value;
+  const type = document.getElementById('mov_type').value;
+  if (!prod||!wh||!qty||qty<1) { showToast('يرجى ملء جميع الحقول المطلوبة','error'); return; }
+
+  const res = await api('/warehouse/movements','POST',{
+    product_id:+prod, warehouse_id:+wh, type, quantity:qty,
+    reference:document.getElementById('mov_ref').value,
+    notes:document.getElementById('mov_notes').value
+  });
+  if (!res) return;
+  showToast(`✅ تم تسجيل حركة ${type}`,'success');
+  closeModal('movementModal');
+  loadMovements();
+  _products = await api('/warehouse/products') || _products;
+}
+
+// ══════════════════════════════════════════
+//  EMPLOYEES
+// ══════════════════════════════════════════
+async function loadEmployees(status='', search='') {
+  const el = document.getElementById('employeesContent');
+  el.innerHTML = '<div class="loader"><div class="spinner"></div></div>';
+  const params = new URLSearchParams();
+  if (status) params.set('status', status);
+  if (search) params.set('search', search);
+  const data = await api('/hr/employees' + (params.toString()?'?'+params:''));
+  if (!data) return;
+  _employees = data;
+
+  el.innerHTML = `
+    <div class="table-wrap">
+      <table id="employeesTable">
+        <thead><tr><th>الكود</th><th>الموظف</th><th>القسم</th><th>المسمى</th><th>الراتب</th><th>تاريخ التعيين</th><th>الحالة</th><th></th></tr></thead>
+        <tbody>
+          ${data.map(e => `<tr>
+            <td class="font-mono text-xs text-muted">${e.code}</td>
+            <td>
+              <div class="flex items-center gap-2">
+                <div class="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold"
+                  style="background:linear-gradient(135deg,#7c3aed,#5b21b6)">${e.name[0]}</div>
+                <div>
+                  <p class="font-semibold text-sm">${e.name}</p>
+                  <p class="text-xs text-muted">${e.email||''}</p>
+                </div>
+              </div>
+            </td>
+            <td class="text-muted">${e.department_name||'-'}</td>
+            <td class="text-muted">${e.job_title||'-'}</td>
+            <td class="font-bold" style="color:#d97706">${fmt(e.basic_salary)}</td>
+            <td class="text-muted">${e.join_date}</td>
+            <td>${badge(e.status)}</td>
+            <td>
+              <div class="flex gap-1">
+                <button onclick='editEmployee(${JSON.stringify(e).replace(/'/g,"\\'")})'
+                  class="btn btn-ghost btn-icon btn-sm" title="تعديل"><i class="fas fa-edit text-muted"></i></button>
+                <button onclick='deleteEmployee(${e.id}, "${e.name}")'
+                  class="btn btn-ghost btn-icon btn-sm text-danger" title="حذف"><i class="fas fa-trash"></i></button>
+              </div>
+            </td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+function resetEmployeeModal() {
+  document.getElementById('emp_id').value='';
+  document.getElementById('empModalTitle').textContent='موظف جديد';
+  ['emp_code','emp_name','emp_title','emp_phone','emp_email'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('emp_salary').value='0';
+  document.getElementById('emp_join').value=today();
+  const sel = document.getElementById('emp_dept');
+  sel.innerHTML = '<option value="">-- بدون قسم --</option>' +
+    _departments.map(d=>`<option value="${d.id}">${d.name}</option>`).join('');
+}
+
+function editEmployee(e) {
+  resetEmployeeModal();
+  document.getElementById('emp_id').value = e.id;
+  document.getElementById('empModalTitle').textContent = 'تعديل موظف';
+  document.getElementById('emp_code').value = e.code;
+  document.getElementById('emp_name').value = e.name;
+  document.getElementById('emp_title').value = e.job_title||'';
+  document.getElementById('emp_salary').value = e.basic_salary;
+  document.getElementById('emp_join').value = e.join_date;
+  document.getElementById('emp_phone').value = e.phone||'';
+  document.getElementById('emp_email').value = e.email||'';
+  if (e.department_id) document.getElementById('emp_dept').value = e.department_id;
+  openModal('employeeModal');
+}
+
+async function saveEmployee() {
+  const code = document.getElementById('emp_code').value.trim();
+  const name = document.getElementById('emp_name').value.trim();
+  const join = document.getElementById('emp_join').value;
+  if (!code||!name||!join) { showToast('الكود والاسم وتاريخ التعيين مطلوبة','error'); return; }
+  const res = await api('/hr/employees','POST',{
+    code,name,join_date:join,
+    department_id: document.getElementById('emp_dept').value||null,
+    job_title: document.getElementById('emp_title').value,
+    basic_salary: +document.getElementById('emp_salary').value,
+    phone: document.getElementById('emp_phone').value,
+    email: document.getElementById('emp_email').value
+  });
+  if (!res) return;
+  showToast('✅ تم حفظ الموظف','success');
+  closeModal('employeeModal');
+  loadEmployees();
+}
+
+// ══════════════════════════════════════════
+//  LEAVES
+// ══════════════════════════════════════════
+async function loadLeaves(status='') {
+  const el = document.getElementById('leavesContent');
+  el.innerHTML = '<div class="loader"><div class="spinner"></div></div>';
+  const data = await api('/hr/leaves' + (status?`?status=${encodeURIComponent(status)}`:''));
+  if (!data) return;
+
+  el.innerHTML = `
+    <div class="table-wrap">
+      <table id="leavesTable">
+        <thead><tr><th>رقم</th><th>الموظف</th><th>النوع</th><th>من</th><th>إلى</th><th>الأيام</th><th>الحالة</th><th>إجراءات</th></tr></thead>
+        <tbody>
+          ${data.map(l => `<tr>
+            <td class="font-mono text-xs text-muted">${l.request_number}</td>
+            <td class="font-semibold">${l.employee_name}</td>
+            <td>${l.type}</td>
+            <td class="text-muted">${l.from_date}</td>
+            <td class="text-muted">${l.to_date}</td>
+            <td class="font-bold text-center">${l.days}</td>
+            <td>${badge(l.status)}</td>
+            <td>
+              ${l.status==='معلقة' ? `
+                <div class="flex gap-1">
+                  <button onclick="approveLeave(${l.id},'معتمدة')" class="btn btn-sm btn-success">✓ اعتماد</button>
+                  <button onclick="approveLeave(${l.id},'مرفوضة')" class="btn btn-sm btn-danger">✗ رفض</button>
+                </div>` : '<span class="text-muted text-xs">-</span>'}
+            </td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+function prepareLeaveModal() {
+  document.getElementById('leave_from').value = today();
+  document.getElementById('leave_to').value = today();
+  document.getElementById('leave_emp').innerHTML =
+    '<option value="">اختر الموظف...</option>' + _employees.map(e=>`<option value="${e.id}">${e.name}</option>`).join('');
+}
+
+async function saveLeave() {
+  const emp = document.getElementById('leave_emp').value;
+  const from = document.getElementById('leave_from').value;
+  const to = document.getElementById('leave_to').value;
+  if (!emp||!from||!to) { showToast('الموظف والتواريخ مطلوبة','error'); return; }
+  if (new Date(to) < new Date(from)) { showToast('تاريخ الانتهاء قبل البداية!','error'); return; }
+  const res = await api('/hr/leaves','POST',{
+    employee_id:+emp, type:document.getElementById('leave_type').value,
+    from_date:from, to_date:to,
+    reason:document.getElementById('leave_reason').value
+  });
+  if (!res) return;
+  showToast('✅ تم إرسال طلب الإجازة','success');
+  closeModal('leaveModal');
+  loadLeaves();
+}
+
+async function approveLeave(id, status) {
+  const res = await api(`/hr/leaves/${id}/approve`,'PATCH',{status});
+  if (res) { showToast(status==='معتمدة'?'✅ تم الاعتماد':'❌ تم الرفض', status==='معتمدة'?'success':'info'); loadLeaves(); }
+}
+
+// ══════════════════════════════════════════
+//  PAYROLL
+// ══════════════════════════════════════════
+async function loadPayroll() {
+  const month = document.getElementById('payrollMonth')?.value || '';
+  const el = document.getElementById('payrollContent');
+  el.innerHTML = '<div class="loader"><div class="spinner"></div></div>';
+  const data = await api('/hr/payroll' + (month?`?month=${month}`:''));
+  if (!data) return;
+
+  const totals = data.reduce((a,p) => ({
+    basic: a.basic + +p.basic_salary,
+    allow: a.allow + +p.allowances,
+    ded:   a.ded   + +p.deductions,
+    net:   a.net   + +p.net_salary
+  }), {basic:0,allow:0,ded:0,net:0});
+
+  document.getElementById('payrollSummary').innerHTML = [
+    ['الأساسي', totals.basic, '#fef9c3', '#92400e'],
+    ['البدلات', totals.allow, '#dbeafe', '#1e40af'],
+    ['الاستقطاعات', totals.ded, '#fee2e2', '#991b1b'],
+    ['الصافي', totals.net, '#d1fae5', '#065f46'],
+  ].map(([l,v,bg,col]) => `
+    <div class="card py-3 px-4" style="background:${bg};border-color:${col}22">
+      <p class="text-xs font-bold mb-1" style="color:${col}">${l}</p>
+      <p class="text-xl font-bold" style="color:${col}">${fmt(v)}</p>
+    </div>`).join('');
+
+  if (!data.length) {
+    el.innerHTML = `<div class="empty-state">
+      <i class="fas fa-money-bill-wave"></i>
+      <p>لا يوجد مسير رواتب للشهر المحدد</p>
+      <button onclick="generatePayroll()" class="btn btn-primary mt-3">إنشاء المسير الآن</button>
+    </div>`; return;
+  }
+
+  el.innerHTML = `
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>الموظف</th><th>الأساسي</th><th>البدلات</th><th>الاستقطاعات</th><th>الصافي</th><th>الحالة</th><th>إجراء</th></tr></thead>
+        <tbody>
+          ${data.map(p => `<tr>
+            <td class="font-semibold">${p.employee_name}</td>
+            <td>${fmt(p.basic_salary)}</td>
+            <td style="color:#1d4ed8">+${fmt(p.allowances)}</td>
+            <td style="color:#dc2626">-${fmt(p.deductions)}</td>
+            <td class="font-bold text-base" style="color:#d97706">${fmt(p.net_salary)}</td>
+            <td>${badge(p.status)}</td>
+            <td>
+              ${p.status==='معلق'
+                ? `<button onclick="payEmployee(${p.id})" class="btn btn-sm btn-success"><i class="fas fa-check"></i> صرف</button>`
+                : '<span class="text-muted text-xs">✓ مصروف</span>'}
+            </td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+async function generatePayroll() {
+  const month = document.getElementById('payrollMonth')?.value;
+  if (!month) { showToast('اختر الشهر أولاً','error'); return; }
+  const ok = await confirm(`إنشاء مسير رواتب لشهر ${month}؟`);
+  if (!ok) return;
+  const res = await api('/hr/payroll/generate','POST',{month});
+  if (res) { showToast(res.message,'success'); loadPayroll(); }
+}
+
+async function payEmployee(id) {
+  const res = await api(`/hr/payroll/${id}/pay`,'PATCH');
+  if (res) { showToast('✅ تم صرف الراتب','success'); loadPayroll(); }
+}
+
+// ══════════════════════════════════════════
+//  NOTIFICATIONS
+// ══════════════════════════════════════════
+async function checkNotifications() {
+  const dash = await api('/reports/dashboard');
+  if (!dash) return;
+  const count = dash.stock_alerts.length + dash.pending_leaves;
+  if (count > 0) {
+    const badge = document.getElementById('notifBadge');
+    badge.textContent = count;
+    badge.classList.remove('hidden');
+  }
+}
+
+// ══════════════════════════════════════════
+//  HELPERS
+// ══════════════════════════════════════════
+function fmt(n) {
+  return Number(n||0).toLocaleString('ar-EG',{maximumFractionDigits:0}) + ' ج.م';
+}
+
+function today() {
+  return new Date().toISOString().split('T')[0];
+}
+
+function setText(id, val) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = val;
+}
+
+function badge(status, ctx = 'status') {
+  if (ctx === 'type') {
+    const m = { أصول:'badge-info', خصوم:'badge-danger', إيرادات:'badge-success', مصروفات:'badge-warning', 'حقوق ملكية':'badge-gray' };
+    return `<span class="badge ${m[status]||'badge-gray'}">${status}</span>`;
+  }
+  const m = {
+    'مدفوعة':'badge-success','مُسلَّم':'badge-success','مُستلَم':'badge-success','معتمدة':'badge-success','نشط':'badge-success','مصروف':'badge-success','متاح':'badge-success',
+    'معلقة':'badge-warning','جاري التوصيل':'badge-cyan','في الطريق':'badge-cyan','معتمد':'badge-cyan','مؤكد':'badge-cyan','جارية':'badge-cyan','إجازة':'badge-cyan','معلق':'badge-warning',
+    'متأخرة':'badge-danger','ملغي':'badge-danger','موقوف':'badge-danger','مرفوضة':'badge-danger','نفد':'badge-danger','ملغاة':'badge-danger',
+    'مسودة':'badge-gray','منخفض':'badge-warning',
+  };
+  return `<span class="badge ${m[status]||'badge-gray'}">${status}</span>`;
+}
+
+function filterTable(tableId, q) {
+  const t = document.getElementById(tableId);
+  if (!t) return;
+  const rows = t.querySelectorAll('tbody tr');
+  const ql = q.toLowerCase();
+  rows.forEach(r => r.style.display = r.textContent.toLowerCase().includes(ql) ? '' : 'none');
+}
+
+// ══════════════════════════════════════════
+//  MODAL HELPERS
+// ══════════════════════════════════════════
+function openModal(id) {
+  document.getElementById(id).classList.remove('hidden');
+}
+function closeModal(id) {
+  document.getElementById(id).classList.add('hidden');
+}
+
+// Confirm Dialog
+let _confirmResolve = null;
+function confirm(msg, title = 'تأكيد العملية') {
+  return new Promise(resolve => {
+    _confirmResolve = resolve;
+    document.getElementById('confirmTitle').textContent = title;
+    document.getElementById('confirmMsg').textContent = msg;
+    document.getElementById('confirmDialog').classList.remove('hidden');
+  });
+}
+function closeConfirm(result) {
+  document.getElementById('confirmDialog').classList.add('hidden');
+  if (_confirmResolve) { _confirmResolve(result); _confirmResolve = null; }
+}
+
+// Close modal on overlay click
+document.querySelectorAll('.modal-overlay').forEach(o => {
+  o.addEventListener('click', e => { if (e.target === o) o.classList.add('hidden'); });
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    document.querySelectorAll('.modal-overlay:not(.hidden)').forEach(m => m.classList.add('hidden'));
+  }
+});
+
+// ══════════════════════════════════════════
+//  UI HELPERS
+// ══════════════════════════════════════════
+function showToast(msg, type='info') {
+  const c = document.getElementById('toastContainer');
+  const t = document.createElement('div');
+  const icons = { success:'fa-check-circle', error:'fa-exclamation-circle', info:'fa-info-circle', warning:'fa-exclamation-triangle' };
+  t.className = `toast toast-${type}`;
+  t.innerHTML = `<i class="fas ${icons[type]||icons.info}"></i><span>${msg}</span>`;
+  c.appendChild(t);
+  setTimeout(() => { t.style.animation='toastOut 0.3s ease forwards'; setTimeout(()=>t.remove(), 300); }, 3500);
+}
+
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('collapsed');
+}
+
+function toggleDark() {
+  document.documentElement.classList.toggle('dark');
+  localStorage.setItem('erp_dark', document.documentElement.classList.contains('dark'));
+}
+
+if (localStorage.getItem('erp_dark') === 'true') {
+  document.documentElement.classList.add('dark');
+}
+
+// ══════════════════════════════════════════
+//  PWA
+// ══════════════════════════════════════════
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  document.getElementById('installBtn').classList.add('show');
+  document.getElementById('installBtnTop')?.classList.remove('hidden');
+});
+
+window.addEventListener('appinstalled', () => {
+  deferredPrompt = null;
+  document.getElementById('installBtn').classList.remove('show');
+  document.getElementById('installBtnTop')?.classList.add('hidden');
+  showToast('✅ تم تثبيت التطبيق بنجاح!', 'success');
+});
+
+async function installPWA() {
+  if (!deferredPrompt) { showToast('التطبيق مثبّت مسبقاً أو غير مدعوم', 'info'); return; }
+  deferredPrompt.prompt();
+  const { outcome } = await deferredPrompt.userChoice;
+  if (outcome === 'accepted') showToast('✅ شكراً! يتم التثبيت...', 'success');
+  deferredPrompt = null;
+}
+
+// Register Service Worker
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js')
+      .then(reg => console.log('[PWA] SW registered:', reg.scope))
+      .catch(err => console.warn('[PWA] SW failed:', err));
+  });
+}
+
+// Offline detection
+window.addEventListener('online',  () => { document.getElementById('offlineBanner').classList.remove('show'); setApiStatus(true); });
+window.addEventListener('offline', () => { document.getElementById('offlineBanner').classList.add('show'); setApiStatus(false); });
+if (!navigator.onLine) document.getElementById('offlineBanner').classList.add('show');
+
+// ══════════════════════════════════════════
+//  KEYBOARD SHORTCUTS
+// ══════════════════════════════════════════
+document.addEventListener('keydown', e => {
+  if (e.ctrlKey && e.altKey) {
+    const shortcuts = { d:'dashboard', i:'invoices', s:'sales', p:'products', e:'employees' };
+    if (shortcuts[e.key]) {
+      e.preventDefault();
+      const btn = document.querySelector(`[onclick*="${shortcuts[e.key]}"]`);
+      showModule(shortcuts[e.key], btn);
+    }
+  }
+});
+
+// Check URL params on load (PWA shortcuts)
+const urlMod = new URLSearchParams(window.location.search).get('module');
+if (urlMod && modTitles[urlMod]) {
+  setTimeout(() => {
+    const btn = document.querySelector(`[onclick*="${urlMod}"]`);
+    showModule(urlMod, btn);
+  }, 500);
+}
+async function deleteEmployee(id, name) {
+  const ok = await confirm(`هل أنت متأكد من مسح الموظف "${name}"؟\nلا يمكن التراجع عن هذا الإجراء!`, 'تأكيد الحذف');
+  if (!ok) return;
+
+  const res = await api(`/hr/employees/${id}`, 'DELETE');
+  if (res) {
+    showToast('✅ تم مسح الموظف بنجاح', 'success');
+    loadEmployees(); // عشان الجدول يتحدث ويشيل الموظف الممسوح
+  }
+}async function deleteCustomer(id, name) {
+  const ok = await confirm(`هل أنت متأكد من مسح العميل "${name}"؟`, 'تأكيد الحذف');
+  if (!ok) return;
+  const res = await api(`/customers/${id}`, 'DELETE'); // لو المسار مختلف عندك خليه /contacts/customers
+  if (res) { showToast('تم مسح العميل', 'success'); loadCustomers(); }
+}
+
+async function deleteSupplier(id, name) {
+  const ok = await confirm(`هل أنت متأكد من مسح المورد "${name}"؟`, 'تأكيد الحذف');
+  if (!ok) return;
+  const res = await api(`/suppliers/${id}`, 'DELETE'); // لو المسار مختلف عندك خليه /contacts/suppliers
+  if (res) { showToast('تم مسح المورد', 'success'); loadSuppliers(); }
+}
+
+async function printInvoice(id) {
+  showToast('جاري تجهيز الفاتورة للطباعة...', 'info');
+  const data = await api(`/invoices/${id}`);
+  if (!data) return;
+
+  // تصميم الفاتورة الإلكترونية
+  const invoiceHTML = `
+    <div id="printArea" style="padding:40px; font-family:'Tajawal', sans-serif; direction:rtl; background:white; color:black;">
+      <div style="display:flex; justify-content:space-between; border-bottom:2px solid #1e3a8a; padding-bottom:20px; margin-bottom:20px;">
+        <div>
+          <h1 style="color:#1e3a8a; margin:0;">ERP System Pro</h1>
+          <p style="margin:5px 0;">الرقم الضريبي: 123-456-789</p>
+        </div>
+        <div style="text-align:left;">
+          <h2 style="margin:0;">فاتورة ضريبية</h2>
+          <p style="margin:5px 0;">رقم: <strong>${data.invoice_number}</strong></p>
+          <p style="margin:5px 0;">التاريخ: ${data.date.split('T')[0]}</p>
+        </div>
+      </div>
+      <div style="margin-bottom:30px;">
+        <h3 style="background:#f1f5f9; padding:8px;">بيانات العميل</h3>
+        <p><strong>الاسم:</strong> ${data.customer_name}</p>
+        <p><strong>الرقم الضريبي:</strong> ${data.tax_number || 'غير مسجل'}</p>
+        <p><strong>العنوان:</strong> ${data.city || '-'}</p>
+      </div>
+      <table style="width:100%; border-collapse:collapse; margin-bottom:20px;">
+        <thead>
+          <tr style="background:#1e3a8a; color:white;">
+            <th style="padding:10px; border:1px solid #ddd;">البيان</th>
+            <th style="padding:10px; border:1px solid #ddd;">الكمية</th>
+            <th style="padding:10px; border:1px solid #ddd;">السعر</th>
+            <th style="padding:10px; border:1px solid #ddd;">الإجمالي</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${data.lines.map(l => `
+            <tr>
+              <td style="padding:10px; border:1px solid #ddd;">${l.description}</td>
+              <td style="padding:10px; border:1px solid #ddd; text-align:center;">${l.quantity}</td>
+              <td style="padding:10px; border:1px solid #ddd; text-align:center;">${fmt(l.unit_price)}</td>
+              <td style="padding:10px; border:1px solid #ddd; text-align:center;">${fmt(l.total)}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+      <div style="width:50%; margin-right:auto; background:#f8fafc; padding:15px; border-radius:8px;">
+        <div style="display:flex; justify-content:space-between; margin-bottom:8px;"><span>الإجمالي قبل الضريبة:</span> <span>${fmt(data.subtotal)}</span></div>
+        <div style="display:flex; justify-content:space-between; margin-bottom:8px;"><span>ضريبة قيمة مضافة (${data.tax_rate}%):</span> <span>${fmt(data.tax_amount)}</span></div>
+        <div style="display:flex; justify-content:space-between; margin-bottom:8px; color:#dc2626;"><span>خصم المنبع (${data.withholding_tax}%):</span> <span>-${fmt((data.subtotal * data.withholding_tax)/100)}</span></div>
+        <hr style="border:none; border-top:1px solid #cbd5e1; margin:10px 0;">
+        <div style="display:flex; justify-content:space-between; font-weight:bold; font-size:18px; color:#1e3a8a;"><span>الصافي المستحق:</span> <span>${fmt(data.total)}</span></div>
+      </div>
+      <div style="margin-top:50px; text-align:center; color:#64748b; font-size:12px;">
+        <p>تم إصدار هذه الفاتورة إلكترونياً من نظام ERP System Pro</p>
+      </div>
+    </div>
+  `;
+
+  // إنشاء عنصر مؤقت للطباعة
+  const tempDiv = document.createElement('div');
+  tempDiv.innerHTML = invoiceHTML;
+  document.body.appendChild(tempDiv);
+  tempDiv.style.display = 'none';
+
+  // استخدام مكتبة html2pdf
+  html2pdf().set({
+    margin: 10,
+    filename: `Invoice_${data.invoice_number}.pdf`,
+    image: { type: 'jpeg', quality: 0.98 },
+    html2canvas: { scale: 2 },
+    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+  }).from(tempDiv.querySelector('#printArea')).save().then(() => {
+    tempDiv.remove();
+    showToast('✅ تم تحميل الفاتورة بنجاح', 'success');
+  });
+}
+
+function applyPermissions() {
+  const role = currentUser?.role;
+  if (!role) return;
+
+  // 1. إخفاء كل القوائم كوضع افتراضي
+  document.querySelectorAll('#sidebar .nav-section, #sidebar .nav-link').forEach(el => el.style.display = 'none');
+
+  // 2. إظهار لوحة التحكم للجميع
+  document.querySelector('#nav-dashboard').style.display = 'flex';
+  document.querySelector('#sidebar .nav-section:nth-of-type(1)').style.display = 'block';
+
+  // 3. توزيع الصلاحيات
+  if (role === 'admin') {
+    // الأدمن يشوف كل حاجة
+    document.querySelectorAll('#sidebar .nav-section, #sidebar .nav-link').forEach(el => el.style.display = '');
+  } 
+  else if (role === 'accountant') {
+    // المحاسب يشوف المحاسبة والعملاء والموردين
+    document.querySelectorAll('[onclick*="invoices"], [onclick*="accounts"], [onclick*="customers"], [onclick*="suppliers"]').forEach(el => el.style.display = 'flex');
+  }
+  else if (role === 'hr') {
+    // الـ HR يشوف الموارد البشرية بس
+    document.querySelectorAll('[onclick*="employees"], [onclick*="leaves"], [onclick*="payroll"]').forEach(el => el.style.display = 'flex');
+  }
+  else if (role === 'warehouse') {
+    // أمين المخزن يشوف المخازن والمشتريات
+    document.querySelectorAll('[onclick*="products"], [onclick*="movements"], [onclick*="purchases"], [onclick*="suppliers"]').forEach(el => el.style.display = 'flex');
+  }
+  else if (role === 'sales') {
+    // المبيعات تشوف أوامر البيع والعملاء
+    document.querySelectorAll('[onclick*="sales"], [onclick*="customers"]').forEach(el => el.style.display = 'flex');
+  }
+}
+
+// 1. جلب الدول كلها أول ما الصفحة تفتح
+async function loadCountries() {
+  const res = await api('/locations/countries');
+  if (!res) return;
+  const select = document.getElementById('contact_country');
+  select.innerHTML = '<option value="">اختر الدولة...</option>' + 
+    res.map(c => `<option value="${c.code}">${c.name}</option>`).join('');
+}
+
+// 2. لما اليوزر يختار دولة (نجيب محافظاتها)
+async function onCountryChange() {
+  const countryCode = document.getElementById('contact_country').value;
+  const stateSelect = document.getElementById('contact_state');
+  const citySelect = document.getElementById('contact_city');
+
+  // نقفل ونفضي المدن والمحافظات الأول
+  stateSelect.innerHTML = '<option value="">اختر المحافظة...</option>';
+  stateSelect.disabled = true;
+  citySelect.innerHTML = '<option value="">اختر المدينة...</option>';
+  citySelect.disabled = true;
+
+  if (!countryCode) return; // لو اختار الفاضي نوقف هنا
+
+  const res = await api(`/locations/states/${countryCode}`);
+  if (!res || res.length === 0) return;
+
+  stateSelect.innerHTML += res.map(s => `<option value="${s.code}">${s.name}</option>`).join('');
+  stateSelect.disabled = false; // نفتح خانة المحافظة
+}
+
+// 3. لما اليوزر يختار محافظة (نجيب مدنها)
+async function onStateChange() {
+  const countryCode = document.getElementById('contact_country').value;
+  const stateCode = document.getElementById('contact_state').value;
+  const citySelect = document.getElementById('contact_city');
+
+  citySelect.innerHTML = '<option value="">اختر المدينة...</option>';
+  citySelect.disabled = true;
+
+  if (!stateCode) return;
+
+  const res = await api(`/locations/cities/${countryCode}/${stateCode}`);
+  if (!res || res.length === 0) return;
+
+  citySelect.innerHTML += res.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
+  citySelect.disabled = false; // نفتح خانة المدينة
+}
+
+</script>
+
+<style>
+  @keyframes toastOut { to { opacity:0; transform:translateX(-20px); } }
+</style>
+</body>
+</html>
