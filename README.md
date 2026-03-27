@@ -1,4 +1,4 @@
-# ⚡ Nexa Store & ERP System
+# ⚡ Nexus Store & ERP System
 
 ![Project Status](https://img.shields.io/badge/Status-Active-success)
 ![Version](https://img.shields.io/badge/Version-1.0.0-blue)
