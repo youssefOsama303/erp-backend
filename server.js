@@ -117,9 +117,9 @@ app.use((err, _req, res, _next) => {
 // ══════════════════════════════════════════════
 //  START
 // ══════════════════════════════════════════════
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`\n🚀 ERP API running on http://localhost:${PORT}`);
-  console.log(`🔒 Security: Helmet + Rate Limiting enabled`);
-  console.log(`🌍 Environment: ${process.env.NODE_ENV || "development"}\n`);
+const PORT = process.env.PORT || 8080;
+app.listen(PORT, "0.0.0.0", () => {
+    console.log(`\n🚀 ERP API running on port ${PORT}`);
+    console.log(`🔒 Security: Helmet + Rate Limiting enabled`);
+    console.log(`🌍 Environment: ${process.env.NODE_ENV || "development"}\n`);
 });
