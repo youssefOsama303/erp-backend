@@ -1,0 +1,10 @@
+<svg width="256" height="256" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect x="90" y="110" width="50" height="30" rx="4" fill="#E88300" stroke="white" stroke-width="4"/>
+  <circle cx="105" cy="145" r="5" fill="white"/>
+  <circle cx="135" cy="145" r="5" fill="white"/>
+</svg>
+<!-- slide -->
+<svg width="256" height="256" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M100 150V110L128 90L156 110V150H100Z" fill="#F5B335" stroke="white" stroke-width="4"/>
+  <circle cx="128" cy="125" r="8" fill="white"/>
+</svg>

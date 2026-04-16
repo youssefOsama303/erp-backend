@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Nexus ERP — Warehouse (EWM)</title>
+<!-- No Tailwind — uses custom styles only to prevent override -->
+<style>
+/* Module-level styles */
+.page-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:28px; flex-wrap:wrap; gap:12px; }
+.page-title  { font-size:22px; font-weight:900; color:#0f3a5a; }
+.page-sub    { font-size:13px; color:#64748b; margin-top:2px; }
+.btn { border:none; border-radius:10px; padding:9px 18px; font-size:13px; font-weight:600; cursor:pointer; transition:all 0.2s; }
+.btn-primary { background:#0f3a5a; color:white; } .btn-primary:hover { background:#1a5276; }
+.btn-green   { background:#5ba15d; color:white; } .btn-green:hover   { background:#498a4b; }
+.btn-amber   { background:#f5b335; color:#1e293b; } .btn-amber:hover { background:#e0a028; }
+.btn-sm      { padding:6px 14px; font-size:12px; }
+.nx-card     { background:white; border-radius:14px; box-shadow:0 2px 10px rgba(0,0,0,.06); padding:20px; }
+
+/* KPI strip — !important to prevent any framework override */
+.kpi-strip { 
+  display:flex !important; 
+  flex-direction:row !important;
+  flex-wrap:wrap !important; 
+  gap:16px !important; 
+  margin-bottom:24px !important;
+}
+.kpi-box {
+  flex:1 1 160px !important;
+  max-width:260px !important;
+  border-radius:12px !important; 
+  padding:18px !important; 
+  color:white !important;
+  min-height:90px !important;
+}
+
+/* Heatmap grid */
+#heatmap-container { display:grid; gap:4px; margin-top:16px; }
+.bin-cell {
+  width:100%;
+  height:52px;
+  position:relative; border-radius:6px; cursor:pointer;
+  transition:transform 0.15s, box-shadow 0.15s;
+  min-width:40px;
+}
+.bin-cell:hover { transform:scale(1.08); box-shadow:0 4px 12px rgba(0,0,0,0.2); z-index:10; }
+.bin-cell-inner {
+  position:absolute; inset:0;
+  display:flex; flex-direction:column;
+  align-items:center; justify-content:center;
+  font-size:9px; font-weight:700;
+  padding:3px; text-align:center; border-radius:6px;
+  overflow:hidden;
+  line-height:1.2;
+}
+
+/* Task list */
+.task-row { display:flex; align-items:center; gap:12px; padding:12px 0; border-bottom:1px solid #f1f5f9; }
+.task-row:last-child { border-bottom:none; }
+.task-badge { border-radius:20px; padding:3px 10px; font-size:10px; font-weight:700; text-transform:uppercase; white-space:nowrap; }
+.badge-open     { background:#dbeafe; color:#1e40af; }
+.badge-wip      { background:#fef9c3; color:#92400e; }
+.badge-done     { background:#dcfce7; color:#15803d; }
+.badge-putaway  { background:#ede9fe; color:#5b21b6; }
+.badge-picking  { background:#fce7f3; color:#9d174d; }
+.badge-transfer { background:#f0fdf4; color:#065f46; }
+
+/* Modals — high z-index, always on top */
+.modal-overlay { 
+  position:fixed; inset:0; background:rgba(0,0,0,0.55); 
+  z-index:9000; display:flex; align-items:center; justify-content:center; 
+  backdrop-filter:blur(2px);
+}
+.modal-overlay.hidden { display:none !important; }
+.modal-box { background:white; border-radius:20px; padding:32px; width:480px; max-width:90vw; max-height:90vh; overflow-y:auto; box-shadow:0 25px 60px rgba(0,0,0,0.3); }
+
+/* Warehouse tab strip */
+.tab-strip { display:flex; gap:8px; margin-bottom:20px; flex-wrap:wrap; }
+.wh-tab { padding:7px 16px; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; border:2px solid #e2e8f0; background:white; color:#475569; transition:all 0.15s; }
+.wh-tab.active { border-color:#0f3a5a; background:#0f3a5a; color:white; }
+
+/* Tooltip */
+.bin-tooltip { position:fixed; background:#1e293b; color:white; border-radius:10px; padding:10px 14px; font-size:12px; z-index:9999; pointer-events:none; white-space:nowrap; max-width:240px; white-space:normal; }
+</style>
+</head>
+<body style="background:#f4f6f9; font-family:'Inter',sans-serif;">
+<main style="padding:28px 32px;">
+
+<!-- INLINE STYLES: Must be inside <main> so SPA injects them with content -->
+<style>
+/* EWM Module — scoped styles injected via SPA */
+.ewm-page { font-family:'Inter',sans-serif; }
+.page-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:28px; flex-wrap:wrap; gap:12px; }
+.page-title  { font-size:22px; font-weight:900; color:#0f3a5a; margin:0; }
+.page-sub    { font-size:13px; color:#64748b; margin-top:2px; }
+.btn { border:none; border-radius:10px; padding:9px 18px; font-size:13px; font-weight:600; cursor:pointer; transition:all 0.2s; }
+.btn-primary { background:#0f3a5a; color:white; } .btn-primary:hover { background:#1a5276; }
+.btn-green   { background:#5ba15d; color:white; } .btn-green:hover   { background:#498a4b; }
+.btn-amber   { background:#f5b335; color:#1e293b; } .btn-amber:hover { background:#e0a028; }
+.btn-sm      { padding:6px 14px; font-size:12px; }
+.nx-card     { background:white; border-radius:14px; box-shadow:0 2px 10px rgba(0,0,0,.06); padding:20px; }
+
+/* KPI strip */
+.kpi-strip-ewm { display:flex !important; flex-direction:row !important; flex-wrap:nowrap !important; gap:14px !important; margin-bottom:24px !important; overflow-x:auto; }
+.kpi-box-ewm   { flex:1 1 0 !important; min-width:130px !important; border-radius:12px !important; padding:18px !important; color:white !important; }
+
+/* Heatmap */
+#heatmap-container { display:grid; gap:4px; margin-top:16px; overflow-x:auto; }
+.bin-cell { width:100%; height:52px !important; min-height:52px !important; position:relative; border-radius:6px; cursor:pointer; transition:transform 0.15s, box-shadow 0.15s; min-width:40px; }
+.bin-cell:hover { transform:scale(1.08); box-shadow:0 4px 12px rgba(0,0,0,0.2); z-index:10; }
+.bin-cell-inner { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; font-size:9px; font-weight:700; padding:3px; text-align:center; border-radius:6px; overflow:hidden; line-height:1.2; }
+
+/* Tasks */
+.task-row { display:flex; align-items:center; gap:12px; padding:12px 0; border-bottom:1px solid #f1f5f9; }
+.task-row:last-child { border-bottom:none; }
+.task-badge { border-radius:20px; padding:3px 10px; font-size:10px; font-weight:700; text-transform:uppercase; white-space:nowrap; }
+.badge-open     { background:#dbeafe; color:#1e40af; }
+.badge-wip      { background:#fef9c3; color:#92400e; }
+.badge-done     { background:#dcfce7; color:#15803d; }
+
+/* Modal overlay — position:fixed works globally */
+.ewm-modal-overlay { position:fixed !important; inset:0 !important; background:rgba(0,0,0,0.6) !important; z-index:99999 !important; display:flex !important; align-items:center !important; justify-content:center !important; }
+.ewm-modal-overlay.hidden { display:none !important; }
+.ewm-modal-box { background:white; border-radius:20px; padding:32px; width:480px; max-width:90vw; max-height:90vh; overflow-y:auto; box-shadow:0 25px 60px rgba(0,0,0,0.4); }
+
+/* Tabs */
+.tab-strip { display:flex; gap:8px; margin-bottom:20px; flex-wrap:wrap; }
+.wh-tab { padding:7px 16px; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; border:2px solid #e2e8f0; background:white; color:#475569; transition:all 0.15s; }
+.wh-tab.active { border-color:#0f3a5a; background:#0f3a5a; color:white; }
+
+/* Tooltip */
+.bin-tooltip { position:fixed; background:#1e293b; color:white; border-radius:10px; padding:10px 14px; font-size:12px; z-index:99999; pointer-events:none; max-width:240px; white-space:normal; }
+</style>
+
+<!-- TOP-LEVEL STUBS: always available for onclick= in SPA context -->
+<script>
+  function openPutawayModal() { var m=document.getElementById('putawayModal'); if(m) m.classList.remove('hidden'); }
+  function closePutaway()     { var m=document.getElementById('putawayModal'); if(m) m.classList.add('hidden'); }
+  function closeBinModal()    { var m=document.getElementById('binModal');    if(m) m.classList.add('hidden'); }
+  function loadDemoData()     { if(window._ewmLoadDemo)      window._ewmLoadDemo(); }
+  function refreshAll()       { if(window._ewmRefreshAll)    window._ewmRefreshAll(); }
+  function selectWarehouse(c) { if(window._ewmSelectWH)      window._ewmSelectWH(c); }
+  function loadTasks()        { if(window._ewmLoadTasks)     window._ewmLoadTasks(); }
+  function submitPutaway(e)   { e.preventDefault(); if(window._ewmSubmitPutaway) window._ewmSubmitPutaway(e); }
+  function showTooltip(e,el)  { if(window._ewmShowTooltip)  window._ewmShowTooltip(e,el); }
+  function hideTooltip()      { if(window._ewmHideTooltip)   window._ewmHideTooltip(); }
+  function showBinDetail(c)   { if(window._ewmShowBinDetail) window._ewmShowBinDetail(c); }
+  function advanceTask(id,st) { if(window._ewmAdvanceTask)   window._ewmAdvanceTask(id,st); }
+</script>
+
+<!-- ── Page Header ── -->
+<div class="page-header">
+  <div>
+    <h1 class="page-title">📦 Warehouse Management (EWM)</h1>
+    <p class="page-sub">Extended Warehouse Management — 3D bin view, stock tracking & task management</p>
+  </div>
+  <div style="display:flex;gap:10px;flex-wrap:wrap;">
+    <button class="btn btn-amber btn-sm" onclick="openPutawayModal()">+ Putaway Task</button>
+    <button class="btn btn-green btn-sm" id="loadDemoBtn" onclick="loadDemoData()">🔄 Load Demo EWM</button>
+    <button class="btn btn-primary btn-sm" onclick="refreshAll()">↺ Refresh</button>
+  </div>
+</div>
+
+<!-- ── KPI Strip ── -->
+<div id="kpiStrip" class="kpi-strip-ewm">
+  <div class="kpi-box-ewm" style="background:linear-gradient(135deg,#0f3a5a,#1a5276);">
+    <p style="font-size:11px;opacity:0.7;margin:0 0 6px;">Total Bins</p>
+    <p style="font-size:28px;font-weight:900;margin:0;" id="kpi-bins">—</p>
+  </div>
+  <div class="kpi-box-ewm" style="background:linear-gradient(135deg,#5ba15d,#2e7d32);">
+    <p style="font-size:11px;opacity:0.7;margin:0 0 6px;">Active SKUs</p>
+    <p style="font-size:28px;font-weight:900;margin:0;" id="kpi-skus">—</p>
+  </div>
+  <div class="kpi-box-ewm" style="background:linear-gradient(135deg,#f5b335,#e0a028);color:#1e293b;">
+    <p style="font-size:11px;opacity:0.7;margin:0 0 6px;">Open Tasks</p>
+    <p style="font-size:28px;font-weight:900;margin:0;" id="kpi-tasks">—</p>
+  </div>
+  <div class="kpi-box-ewm" style="background:linear-gradient(135deg,#1b7c83,#0e6655);">
+    <p style="font-size:11px;opacity:0.7;margin:0 0 6px;">Avg Occupancy</p>
+    <p style="font-size:28px;font-weight:900;margin:0;" id="kpi-occ">—</p>
+  </div>
+</div>
+
+<!-- ── Main Grid: Heatmap + Tasks ── -->
+<div style="display:grid;grid-template-columns:1fr 360px;gap:20px;align-items:start;">
+
+  <!-- Left: Heatmap -->
+  <div class="nx-card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
+      <div>
+        <h3 style="font-size:15px;font-weight:700;color:#0f3a5a;margin:0;">Bin Occupancy Heatmap</h3>
+        <p style="font-size:12px;color:#94a3b8;margin:4px 0 0;">
+          Color = occupancy level. Click a bin for details.
+        </p>
+      </div>
+      <!-- Legend -->
+      <div style="display:flex;gap:8px;flex-wrap:wrap;font-size:11px;font-weight:600;">
+        <span style="display:flex;align-items:center;gap:4px;"><span style="width:12px;height:12px;background:#dcfce7;border-radius:3px;display:inline-block;"></span>Empty</span>
+        <span style="display:flex;align-items:center;gap:4px;"><span style="width:12px;height:12px;background:#fef9c3;border-radius:3px;display:inline-block;"></span>1–40%</span>
+        <span style="display:flex;align-items:center;gap:4px;"><span style="width:12px;height:12px;background:#fed7aa;border-radius:3px;display:inline-block;"></span>40–75%</span>
+        <span style="display:flex;align-items:center;gap:4px;"><span style="width:12px;height:12px;background:#fca5a5;border-radius:3px;display:inline-block;"></span>75–100%</span>
+        <span style="display:flex;align-items:center;gap:4px;"><span style="width:12px;height:12px;background:#bfdbfe;border-radius:3px;display:inline-block;"></span>Cold</span>
+      </div>
+    </div>
+
+    <!-- Warehouse tabs -->
+    <div class="tab-strip" id="warehouseTabs"></div>
+
+    <!-- Grid canvas -->
+    <div id="heatmap-container" style="min-height:200px;"></div>
+
+    <p style="font-size:11px;color:#94a3b8;text-align:center;margin-top:12px;" id="heatmapFooter"></p>
+  </div>
+
+  <!-- Right: Tasks panel -->
+  <div>
+    <div class="nx-card" style="margin-bottom:16px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+        <h3 style="font-size:15px;font-weight:700;color:#0f3a5a;margin:0;">Warehouse Tasks</h3>
+        <select id="taskFilter" onchange="loadTasks()" style="border:1px solid #e2e8f0;border-radius:8px;padding:5px 10px;font-size:12px;outline:none;">
+          <option value="">All</option>
+          <option value="open">Open</option>
+          <option value="in_progress">In Progress</option>
+          <option value="done">Done</option>
+        </select>
+      </div>
+      <div id="taskList" style="max-height:460px;overflow-y:auto;">
+        <p style="text-align:center;color:#94a3b8;padding:32px;">Loading tasks...</p>
+      </div>
+    </div>
+
+    <!-- Quick stats card -->
+    <div class="nx-card" style="padding:16px;">
+      <h4 style="font-size:13px;font-weight:700;color:#0f3a5a;margin:0 0 12px;">Task Summary</h4>
+      <div id="taskSummary" style="display:grid;grid-template-columns:1fr 1fr;gap:8px; font-size:12px;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Bin Detail Modal ── -->
+<div class="ewm-modal-overlay hidden" id="binModal">
+  <div class="ewm-modal-box">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+      <h2 style="font-size:18px;font-weight:800;color:#0f3a5a;margin:0;" id="binModalTitle">Bin Detail</h2>
+      <button onclick="closeBinModal()" style="background:#f1f5f9;border:none;border-radius:8px;width:32px;height:32px;cursor:pointer;font-size:16px;">✕</button>
+    </div>
+    <div id="binModalContent"></div>
+  </div>
+</div>
+
+<!-- ── Putaway Modal ── -->
+<div class="ewm-modal-overlay hidden" id="putawayModal">
+  <div class="ewm-modal-box">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+      <h2 style="font-size:18px;font-weight:800;color:#0f3a5a;margin:0;">Create Putaway Task</h2>
+      <button onclick="closePutaway()" style="background:#f1f5f9;border:none;border-radius:8px;width:32px;height:32px;cursor:pointer;font-size:16px;">✕</button>
+    </div>
+    <form onsubmit="submitPutaway(event)">
+      <div style="display:grid;gap:14px;">
+        <div>
+          <label style="font-size:12px;font-weight:600;color:#475569;display:block;margin-bottom:4px;">Task Type</label>
+          <select id="pt-type" style="width:100%;border:1.5px solid #e2e8f0;border-radius:8px;padding:9px 12px;font-size:13px;outline:none;">
+            <option value="putaway">Putaway</option>
+            <option value="picking">Picking</option>
+            <option value="transfer">Transfer</option>
+            <option value="inventory">Inventory Count</option>
+          </select>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div>
+            <label style="font-size:12px;font-weight:600;color:#475569;display:block;margin-bottom:4px;">From Bin</label>
+            <input id="pt-from" placeholder="e.g. A-01-01" style="width:100%;border:1.5px solid #e2e8f0;border-radius:8px;padding:9px 12px;font-size:13px;outline:none;box-sizing:border-box;">
+          </div>
+          <div>
+            <label style="font-size:12px;font-weight:600;color:#475569;display:block;margin-bottom:4px;">To Bin</label>
+            <input id="pt-to" placeholder="e.g. B-02-05" style="width:100%;border:1.5px solid #e2e8f0;border-radius:8px;padding:9px 12px;font-size:13px;outline:none;box-sizing:border-box;">
+          </div>
+        </div>
+        <div>
+          <label style="font-size:12px;font-weight:600;color:#475569;display:block;margin-bottom:4px;">Material SKU</label>
+          <input id="pt-sku" placeholder="e.g. MAT-PA-01" style="width:100%;border:1.5px solid #e2e8f0;border-radius:8px;padding:9px 12px;font-size:13px;outline:none;box-sizing:border-box;">
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div>
+            <label style="font-size:12px;font-weight:600;color:#475569;display:block;margin-bottom:4px;">Quantity</label>
+            <input type="number" id="pt-qty" value="1" min="1" style="width:100%;border:1.5px solid #e2e8f0;border-radius:8px;padding:9px 12px;font-size:13px;outline:none;box-sizing:border-box;">
+          </div>
+          <div>
+            <label style="font-size:12px;font-weight:600;color:#475569;display:block;margin-bottom:4px;">Priority (1–5)</label>
+            <input type="number" id="pt-priority" value="3" min="1" max="5" style="width:100%;border:1.5px solid #e2e8f0;border-radius:8px;padding:9px 12px;font-size:13px;outline:none;box-sizing:border-box;">
+          </div>
+        </div>
+        <div>
+          <label style="font-size:12px;font-weight:600;color:#475569;display:block;margin-bottom:4px;">Assigned To</label>
+          <input id="pt-assigned" placeholder="worker_01 or robot_02" style="width:100%;border:1.5px solid #e2e8f0;border-radius:8px;padding:9px 12px;font-size:13px;outline:none;box-sizing:border-box;">
+        </div>
+        <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:8px;">
+          <button type="button" onclick="closePutaway()" class="btn" style="background:#f1f5f9;color:#475569;">Cancel</button>
+          <button type="submit" class="btn btn-primary">Create Task</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Tooltip -->
+<div class="bin-tooltip hidden" id="binTooltip"></div>
+
+<script>
+(function() {
+  // ── State ──
+  let allBins = [], allWarehouses = [], currentWarehouse = null;
+  const tooltip = document.getElementById('binTooltip');
+
+  // ── Color mapping for occupancy ──
+  function occupancyColor(pct, zone) {
+    if (zone === 'chilled' || zone === 'frozen') return `hsl(210,80%,${90 - pct*0.4}%)`;
+    if (zone === 'hazmat') return `hsl(30,90%,${90 - pct*0.4}%)`;
+    if (pct === 0)  return '#f0fdf4';  // empty
+    if (pct <= 40)  return `hsl(60,90%,${85 - pct * 0.4}%)`;   // light yellow
+    if (pct <= 75)  return `hsl(30,90%,${80 - pct * 0.3}%)`;   // orange
+    return `hsl(0,80%,${75 - pct * 0.2}%)`;                      // red
+  }
+
+  function textColor(pct) { return pct > 60 ? 'white' : '#1e293b'; }
+
+  // ── Load all data ──
+  async function loadAll() {
+    await loadWarehouses();
+    await Promise.all([loadTasks(), loadKPIs()]);
+  }
+
+  async function loadWarehouses() {
+    try {
+      const d = await NexusAPI.get('/ewm/warehouses');
+      if (!d?.success) return;
+      allWarehouses = d.data;
+      renderWarehouseTabs();
+      if (allWarehouses.length > 0) {
+        currentWarehouse = allWarehouses[0].code;
+        await loadHeatmap();
+      }
+    } catch(e) { console.warn('EWM warehouses:', e.message); }
+  }
+
+  function renderWarehouseTabs() {
+    const strip = document.getElementById('warehouseTabs');
+    strip.innerHTML = allWarehouses.map(w => `
+      <button class="wh-tab${w.code === currentWarehouse ? ' active' : ''}"
+        onclick="selectWarehouse('${w.code}')">
+        ${w.code} — ${w.name}
+      </button>
+    `).join('');
+  }
+
+  window.selectWarehouse = async function(code) {
+    currentWarehouse = code;
+    renderWarehouseTabs();
+    await loadHeatmap();
+  };
+
+  async function loadHeatmap() {
+    const container = document.getElementById('heatmap-container');
+    container.innerHTML = '<p style="text-align:center;padding:40px;color:#94a3b8;">Loading bins...</p>';
+    try {
+      const url = '/ewm/heatmap' + (currentWarehouse ? `?warehouse_code=${currentWarehouse}` : '');
+      const d = await NexusAPI.get(url);
+      if (!d?.success || !d.data.length) {
+        container.innerHTML = '<div style="text-align:center;padding:40px;color:#94a3b8;"><p style="font-size:32px;">📭</p><p>No bins found. Load demo data to view.</p></div>';
+        return;
+      }
+      allBins = d.data;
+      renderHeatmap(d.data);
+    } catch(e) {
+      container.innerHTML = `<p style="text-align:center;padding:32px;color:#ef4444;">${e.message}</p>`;
+    }
+  }
+
+  function renderHeatmap(bins) {
+    if (!bins.length) return;
+    const maxX = Math.max(...bins.map(b => Number(b.x))) || 1;
+    const maxY = Math.max(...bins.map(b => Number(b.y))) || 1;
+    const container = document.getElementById('heatmap-container');
+
+    // ── Use minmax so bins never collapse to 0px ──
+    container.style.gridTemplateColumns = `repeat(${maxX}, minmax(48px, 1fr))`;
+    container.style.overflowX = 'auto';
+
+    // Build lookup map [x_y] → bin
+    const binLookup = {};
+    bins.forEach(b => { binLookup[`${b.x}_${b.y}`] = b; });
+
+    let html = '';
+    for (let row = maxY; row >= 1; row--) {
+      for (let col = 1; col <= maxX; col++) {
+        const b = binLookup[`${col}_${row}`];
+        if (b) {
+          const pct = Number(b.occupancy_pct) || 0;
+          const bg  = occupancyColor(pct, b.temperature_zone);
+          const tc  = textColor(pct);
+          const safeData = JSON.stringify({
+            bin_code: b.bin_code, pct, zone: b.temperature_zone,
+            section: b.section_code, stock_kg: b.stock_kg, capacity_kg: b.capacity_kg
+          }).replace(/'/g, '&apos;');
+          html += `
+            <div class="bin-cell"
+              data-bin='${safeData}'
+              onmouseenter="showTooltip(event,this)"
+              onmouseleave="hideTooltip()"
+              onclick="showBinDetail('${b.bin_code}')">
+              <div class="bin-cell-inner" style="background:${bg};color:${tc};">
+                <span>${b.bin_code.split('-').pop()}</span>
+                <span style="font-size:8px;opacity:0.85;">${pct}%</span>
+              </div>
+            </div>`;
+        } else {
+          html += `<div class="bin-cell"><div class="bin-cell-inner" style="background:#f1f5f9;border:1px dashed #cbd5e1;"></div></div>`;
+        }
+      }
+    }
+    container.innerHTML = html;
+    document.getElementById('heatmapFooter').textContent =
+      `${bins.length} bins | ${maxX} cols × ${maxY} rows`;
+  }
+
+
+  window.showTooltip = function(e, el) {
+    try {
+      const b = JSON.parse(el.dataset.bin.replace(/&apos;/g,"'"));
+      tooltip.innerHTML = `
+        <b>${b.bin_code}</b><br>
+        Section: ${b.section} | Zone: ${b.zone}<br>
+        Stock: ${Number(b.stock_kg).toFixed(1)} kg / ${b.capacity_kg} kg<br>
+        Occupancy: <b>${b.pct}%</b>
+      `;
+      tooltip.classList.remove('hidden');
+      tooltip.style.left = (e.clientX + 12) + 'px';
+      tooltip.style.top  = (e.clientY - 10) + 'px';
+    } catch(_) {}
+  };
+  window.hideTooltip = function() { tooltip.classList.add('hidden'); };
+
+  window.showBinDetail = async function(code) {
+    const modal = document.getElementById('binModal');
+    const content = document.getElementById('binModalContent');
+    document.getElementById('binModalTitle').textContent = `Bin: ${code}`;
+    content.innerHTML = '<p style="text-align:center;padding:20px;">Loading...</p>';
+    modal.classList.remove('hidden');
+
+    // Find bin from loaded data
+    const bin = allBins.find(b => b.bin_code === code);
+    if (bin) {
+      content.innerHTML = `
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:13px;">
+          <div><span style="color:#94a3b8;">Warehouse</span><br><b>${bin.warehouse_name||bin.warehouse_code}</b></div>
+          <div><span style="color:#94a3b8;">Section</span><br><b>${bin.section_name||bin.section_code}</b></div>
+          <div><span style="color:#94a3b8;">Zone</span><br><b>${bin.temperature_zone}</b></div>
+          <div><span style="color:#94a3b8;">Coordinates</span><br><b>X${bin.x} Y${bin.y} Z${bin.z} / ${bin.rotation_deg}°</b></div>
+          <div><span style="color:#94a3b8;">Capacity</span><br><b>${bin.capacity_kg} kg</b></div>
+          <div><span style="color:#94a3b8;">Stock Weight</span><br><b>${Number(bin.stock_kg).toFixed(1)} kg (${bin.occupancy_pct}%)</b></div>
+        </div>
+        <div style="margin-top:16px;background:#f8fafc;border-radius:10px;padding:12px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+            <span style="font-size:13px;font-weight:700;color:#0f3a5a;">Occupancy</span>
+            <span style="font-size:13px;font-weight:700;">${bin.occupancy_pct}%</span>
+          </div>
+          <div style="height:8px;background:#e2e8f0;border-radius:4px;">
+            <div style="height:8px;background:${occupancyColor(Number(bin.occupancy_pct),bin.temperature_zone)};border-radius:4px;width:${bin.occupancy_pct}%;transition:width 0.5s;"></div>
+          </div>
+        </div>
+        <p style="font-size:11px;color:#94a3b8;margin-top:12px;text-align:center;">${bin.sku_count} SKU(s) stored in this bin</p>`;
+    }
+  };
+
+  window.closeBinModal = function() {
+    document.getElementById('binModal').classList.add('hidden');
+  };
+
+  // ── Tasks ──
+  window.loadTasks = async function() {
+    const filter = document.getElementById('taskFilter')?.value;
+    const el = document.getElementById('taskList');
+    el.innerHTML = '<p style="text-align:center;color:#94a3b8;padding:20px;">Loading...</p>';
+    try {
+      const url = '/ewm/tasks?limit=20' + (filter ? `&status=${filter}` : '');
+      const d = await NexusAPI.get(url);
+      if (!d?.success || !d.data.length) {
+        el.innerHTML = '<p style="text-align:center;color:#94a3b8;padding:20px;">No tasks found. Load demo data to get started.</p>';
+        return;
+      }
+      el.innerHTML = d.data.map(t => `
+        <div class="task-row">
+          <div style="flex:1;min-width:0;">
+            <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;flex-wrap:wrap;">
+              <span class="task-badge badge-${t.status === 'in_progress' ? 'wip' : t.status}">${t.status}</span>
+              <span class="task-badge badge-${t.task_type}">${t.task_type}</span>
+              <span style="font-size:10px;color:#94a3b8;">P${t.priority}</span>
+            </div>
+            <p style="font-size:13px;font-weight:600;color:#0f3a5a;margin:2px 0;">${t.material_name||t.sku||'—'}</p>
+            <p style="font-size:11px;color:#64748b;margin:0;">
+              ${t.from_bin_code ? '📤 '+t.from_bin_code : ''}
+              ${t.from_bin_code && t.to_bin_code ? ' → ' : ''}
+              ${t.to_bin_code ? '📥 '+t.to_bin_code : ''}
+              &nbsp;| Qty: ${t.qty} | ${t.assigned_to||'Unassigned'}
+            </p>
+          </div>
+          ${t.status !== 'done' ? `
+            <button onclick="advanceTask(${t.id}, '${t.status}')"
+              style="font-size:11px;padding:5px 10px;border:1px solid #e2e8f0;border-radius:6px;background:white;cursor:pointer;white-space:nowrap;">
+              ${t.status === 'open' ? '▶ Start' : '✓ Complete'}
+            </button>` : ''}
+        </div>`).join('');
+
+      // Summary
+      const open = d.data.filter(t => t.status==='open').length;
+      const wip  = d.data.filter(t => t.status==='in_progress').length;
+      const done = d.data.filter(t => t.status==='done').length;
+      document.getElementById('taskSummary').innerHTML = `
+        <div style="background:#dbeafe;padding:10px;border-radius:8px;text-align:center;">
+          <p style="font-size:20px;font-weight:800;margin:0;color:#1e40af;">${open}</p>
+          <p style="font-size:11px;color:#1e40af;margin:2px 0 0;font-weight:600;">Open</p>
+        </div>
+        <div style="background:#fef9c3;padding:10px;border-radius:8px;text-align:center;">
+          <p style="font-size:20px;font-weight:800;margin:0;color:#92400e;">${wip}</p>
+          <p style="font-size:11px;color:#92400e;margin:2px 0 0;font-weight:600;">In Progress</p>
+        </div>
+        <div style="background:#dcfce7;padding:10px;border-radius:8px;text-align:center;">
+          <p style="font-size:20px;font-weight:800;margin:0;color:#15803d;">${done}</p>
+          <p style="font-size:11px;color:#15803d;margin:2px 0 0;font-weight:600;">Done</p>
+        </div>
+        <div style="background:#f1f5f9;padding:10px;border-radius:8px;text-align:center;">
+          <p style="font-size:20px;font-weight:800;margin:0;color:#475569;">${d.total}</p>
+          <p style="font-size:11px;color:#475569;margin:2px 0 0;font-weight:600;">Total</p>
+        </div>`;
+    } catch(e) {
+      el.innerHTML = `<p style="text-align:center;color:#ef4444;padding:20px;">${e.message}</p>`;
+    }
+  };
+
+  window.advanceTask = async function(id, currentStatus) {
+    const next = currentStatus === 'open' ? 'in_progress' : 'done';
+    const d = await NexusAPI.patch(`/ewm/tasks/${id}/status`, { status: next });
+    if (d?.success) { loadTasks(); }
+  };
+
+  // ── KPIs ──
+  async function loadKPIs() {
+    try {
+      const [binsD, tasksD] = await Promise.all([
+        NexusAPI.get('/ewm/bins?limit=500'),
+        NexusAPI.get('/ewm/tasks?limit=200')
+      ]);
+      const bins  = binsD?.data  || [];
+      const tasks = tasksD?.data || [];
+      document.getElementById('kpi-bins').textContent  = bins.length;
+      document.getElementById('kpi-tasks').textContent = tasks.filter(t=>t.status==='open').length;
+      document.getElementById('kpi-skus').textContent  = new Set(bins.flatMap(b=>b.sku_count>0?[b.bin_code]:[])).size;
+      const avgOcc = bins.length
+        ? Math.round(bins.reduce((s,b)=>s+Number(b.occupancy_pct||0),0)/bins.length)
+        : 0;
+      document.getElementById('kpi-occ').textContent = avgOcc + '%';
+    } catch(e) {}
+  }
+
+  // ── Demo data ──
+  window.loadDemoData = async function() {
+    const btn = document.getElementById('loadDemoBtn');
+    btn.textContent = '⏳ Loading...'; btn.disabled = true;
+    try {
+      const d = await NexusAPI.post('/ewm/seed-demo', {});
+      if (d?.success) {
+        if (typeof NexusUI !== 'undefined') NexusUI.showToast('EWM demo data loaded!', 'success');
+        await loadAll();
+      } else {
+        if (typeof NexusUI !== 'undefined') NexusUI.showToast(d?.message || 'Seed failed', 'error');
+      }
+    } catch(e) {
+      if (typeof NexusUI !== 'undefined') NexusUI.showToast(e.message, 'error');
+    }
+    btn.textContent = '🔄 Load Demo EWM'; btn.disabled = false;
+  };
+
+  // ── Putaway modal ──
+  window.openPutawayModal = function() { document.getElementById('putawayModal').classList.remove('hidden'); };
+  window.closePutaway     = function() { document.getElementById('putawayModal').classList.add('hidden'); };
+
+  window.submitPutaway = async function(e) {
+    e.preventDefault();
+    const payload = {
+      task_type:   document.getElementById('pt-type').value,
+      qty:         +document.getElementById('pt-qty').value,
+      priority:    +document.getElementById('pt-priority').value,
+      assigned_to: document.getElementById('pt-assigned').value || null
+    };
+    // Resolve bin codes to IDs client-side from loaded bins
+    const fromCode = document.getElementById('pt-from').value.trim();
+    const toCode   = document.getElementById('pt-to').value.trim();
+    if (fromCode) { const b = allBins.find(x=>x.bin_code===fromCode); if(b) payload.bin_from_id=b.id; }
+    if (toCode)   { const b = allBins.find(x=>x.bin_code===toCode);   if(b) payload.bin_to_id=b.id;   }
+
+    const d = await NexusAPI.post('/ewm/tasks', payload);
+    if (d?.success) {
+      closePutaway();
+      if (typeof NexusUI !== 'undefined') NexusUI.showToast('Task created!', 'success');
+      loadTasks();
+    } else {
+      if (typeof NexusUI !== 'undefined') NexusUI.showToast(d?.message || 'Failed to create task', 'error');
+    }
+  };
+
+  // ── Bridge: wire IIFE functions to top-level stubs ──
+  window.refreshAll          = loadAll;
+  window._ewmRefreshAll      = loadAll;
+  window._ewmLoadDemo        = async function() {
+    const btn = document.getElementById('loadDemoBtn');
+    if (btn) { btn.textContent = '⏳ Loading...'; btn.disabled = true; }
+    try {
+      const d = await NexusAPI.post('/ewm/seed-demo', {});
+      if (d?.success) { if(typeof NexusUI!=='undefined') NexusUI.showToast('EWM demo data loaded!','success'); await loadAll(); }
+      else { if(typeof NexusUI!=='undefined') NexusUI.showToast(d?.message||'Seed failed','error'); }
+    } catch(e) { if(typeof NexusUI!=='undefined') NexusUI.showToast(e.message,'error'); }
+    if (btn) { btn.textContent = '🔄 Load Demo EWM'; btn.disabled = false; }
+  };
+  window._ewmSelectWH        = async function(code) { currentWarehouse = code; renderWarehouseTabs(); await loadHeatmap(); };
+  window._ewmLoadTasks       = loadTasks;
+  window._ewmSubmitPutaway   = async function(e) {
+    e.preventDefault();
+    const payload = {
+      task_type:   document.getElementById('pt-type').value,
+      qty:         +document.getElementById('pt-qty').value,
+      priority:    +document.getElementById('pt-priority').value,
+      assigned_to: document.getElementById('pt-assigned').value || null
+    };
+    const fromCode = document.getElementById('pt-from').value.trim();
+    const toCode   = document.getElementById('pt-to').value.trim();
+    if (fromCode) { const b = allBins.find(x=>x.bin_code===fromCode); if(b) payload.bin_from_id=b.id; }
+    if (toCode)   { const b = allBins.find(x=>x.bin_code===toCode);   if(b) payload.bin_to_id=b.id; }
+    const d = await NexusAPI.post('/ewm/tasks', payload);
+    if (d?.success) {
+      closePutaway();
+      if(typeof NexusUI!=='undefined') NexusUI.showToast('Task created!','success');
+      loadTasks();
+    } else {
+      if(typeof NexusUI!=='undefined') NexusUI.showToast(d?.message||'Failed','error');
+    }
+  };
+  window._ewmShowTooltip  = showTooltip;
+  window._ewmHideTooltip  = hideTooltip;
+  window._ewmShowBinDetail= showBinDetail;
+  window._ewmAdvanceTask  = advanceTask;
+
+  // ── Init ──
+  loadAll();
+})();
+</script>
+</main>
+</body>
+</html>

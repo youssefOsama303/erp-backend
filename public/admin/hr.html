@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<title>Nexus ERP — Human Resources (HR/HCM)</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+<style>
+  body { font-family:'Inter',sans-serif; background:#f4f6f9; color:#1e293b; margin:0; }
+</style>
+</head>
+<body>
+<main style="padding:28px 32px; font-family:'Inter',sans-serif;">
+
+<!-- Scoped styles -->
+<style>
+.hr-card { background:white; border-radius:14px; box-shadow:0 2px 10px rgba(0,0,0,.06); padding:20px; }
+.hr-btn  { border:none; border-radius:10px; padding:8px 18px; font-size:13px; font-weight:600; cursor:pointer; transition:all 0.2s; }
+.hr-kpi-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:16px; margin-bottom:24px; }
+.hr-main-grid { display:grid; grid-template-columns:1fr 1fr; gap:20px; align-items:start; }
+.hr-pill { padding:3px 10px; border-radius:20px; font-size:11px; font-weight:700; text-transform:uppercase; }
+.hr-progress-bar { height:8px; background:#e2e8f0; border-radius:4px; overflow:hidden; margin-top:6px; }
+.hr-progress-fill { height:100%; border-radius:4px; transition:width 0.5s; }
+.hr-employee-row { display:flex; justify-content:space-between; align-items:center; padding:12px; border:1.5px solid #f1f5f9; border-radius:10px; margin-bottom:8px; cursor:pointer; transition:border-color 0.2s; }
+.hr-employee-row:hover { border-color:#5ba15d; }
+@media(max-width:768px) { .hr-main-grid { grid-template-columns:1fr; } .hr-kpi-grid { grid-template-columns:1fr 1fr; } }
+</style>
+
+<!-- Page Header -->
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:28px;flex-wrap:wrap;gap:12px;">
+  <div>
+    <h1 style="font-size:22px;font-weight:900;color:#0f3a5a;margin:0;">👥 Human Resources &amp; HCM</h1>
+    <p style="font-size:13px;color:#64748b;margin-top:4px;">Employee management, payroll, leave tracking &amp; performance (SAP SuccessFactors)</p>
+  </div>
+  <div style="display:flex;gap:10px;flex-wrap:wrap;">
+    <button class="hr-btn" style="background:#5ba15d;color:white;opacity:0.6;cursor:not-allowed;" title="Coming soon" onclick="alert('Employee form is currently under maintenance. Coming soon.')" disabled>+ New Employee</button>
+    <button class="hr-btn" style="background:#f1f5f9;color:#0f3a5a;border:1.5px solid #e2e8f0;opacity:0.6;cursor:not-allowed;" title="Coming soon" onclick="alert('Payroll generation engine will be available in next phase.')" disabled>Run Payroll</button>
+  </div>
+</div>
+
+<!-- KPI Strip -->
+<div class="hr-kpi-grid">
+  <div style="background:linear-gradient(135deg,#0f3a5a,#1a5276);color:white;border-radius:14px;padding:20px;">
+    <p style="font-size:11px;opacity:0.7;margin:0 0 6px;font-weight:600;">Total Employees</p>
+    <p id="kpi-total" style="font-size:30px;font-weight:900;margin:0;"><span class="spin"></span></p>
+    <p style="font-size:11px;opacity:0.6;margin:4px 0 0;">Active headcount</p>
+  </div>
+  <div style="background:linear-gradient(135deg,#f5b335,#e0a028);color:#1e293b;border-radius:14px;padding:20px;">
+    <p style="font-size:11px;opacity:0.7;margin:0 0 6px;font-weight:600;">Pending Leave Requests</p>
+    <p id="kpi-leaves" style="font-size:30px;font-weight:900;margin:0;"><span class="spin"></span></p>
+    <p style="font-size:11px;opacity:0.6;margin:4px 0 0;">Awaiting approval</p>
+  </div>
+  <div style="background:linear-gradient(135deg,#1b7c83,#0e6655);color:white;border-radius:14px;padding:20px;">
+    <p style="font-size:11px;opacity:0.7;margin:0 0 6px;font-weight:600;">Monthly Payroll</p>
+    <p id="kpi-payroll" style="font-size:30px;font-weight:900;margin:0;"><span class="spin"></span></p>
+    <p style="font-size:11px;opacity:0.6;margin:4px 0 0;">EGP this month</p>
+  </div>
+  <div style="background:linear-gradient(135deg,#5ba15d,#2e7d32);color:white;border-radius:14px;padding:20px;">
+    <p style="font-size:11px;opacity:0.7;margin:0 0 6px;font-weight:600;">Daily Attendance</p>
+    <p style="font-size:30px;font-weight:900;margin:0;">92%</p>
+    <p style="font-size:11px;opacity:0.6;margin:4px 0 0;">Present today</p>
+  </div>
+</div>
+
+<!-- Main Grid -->
+<div class="hr-main-grid">
+
+  <!-- Leave Requests -->
+  <div class="hr-card">
+    <h2 style="font-size:15px;font-weight:700;color:#0f3a5a;margin:0 0 16px;">Leave Requests</h2>
+    <div id="leaveRequestsContainer">
+      <div style="text-align:center;padding:20px"><span class="spin"></span></div>
+    </div>
+  </div>
+
+  <!-- Department Distribution -->
+  <div class="hr-card">
+    <h2 style="font-size:15px;font-weight:700;color:#0f3a5a;margin:0 0 16px;">Headcount by Department</h2>
+    <div id="departmentsContainer" style="display:flex;flex-direction:column;gap:14px;">
+      <div style="text-align:center;padding:20px"><span class="spin"></span></div>
+    </div>
+
+    <div style="margin-top:20px;padding-top:16px;border-top:1px solid #f1f5f9;">
+      <h3 style="font-size:13px;font-weight:700;color:#0f3a5a;margin:0 0 10px;">Upcoming Payroll Schedule</h3>
+      <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:12px;">
+        <div style="display:flex;justify-content:space-between;font-size:12px;">
+          <span style="font-weight:600;color:#15803d;">April Payroll</span>
+          <span style="color:#64748b;">Due: April 28</span>
+        </div>
+        <div style="font-size:11px;color:#64748b;margin-top:4px;">145 employees | Est. 450,000 EGP</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+<script src="/js/api.js"></script>
+<script src="/js/utils.js"></script>
+<script>
+(function() {
+  const LEAVE_PILLS = {
+    'معتمدة':  'background:#dcfce7;color:#15803d;',
+    'مرفوضة':  'background:#fee2e2;color:#b91c1c;',
+    'معلقة':   'background:#fef9c3;color:#92400e;'
+  };
+  const LEAVE_EN = { 'معتمدة':'Approved', 'مرفوضة':'Rejected', 'معلقة':'Pending' };
+  
+  const DEPT_COLORS = ['#5ba15d', '#e57e25', '#1b7c83', '#0f3a5a', '#64748b'];
+
+  async function loadHRData() {
+    try {
+      // 1. Employees KPI
+      const empRes = await NexusAPI.get('/hr/employees');
+      if (empRes) {
+        document.getElementById('kpi-total').textContent = String(empRes.length || 0);
+        const totalSalary = empRes.reduce((acc, e) => acc + parseFloat(e.basic_salary||0), 0);
+        const payrollEl = document.getElementById('kpi-payroll');
+        if (payrollEl) {
+           payrollEl.textContent = totalSalary >= 1000 ? (totalSalary/1000).toFixed(0) + 'K' : Number(totalSalary).toLocaleString();
+        }
+      }
+
+      // 2. Leave Requests
+      const leaveRes = await NexusAPI.get('/hr/leaves');
+      if (leaveRes) {
+        const pendingCount = leaveRes.filter(l => l.status === 'معلقة').length;
+        document.getElementById('kpi-leaves').textContent = String(pendingCount);
+
+        const lCont = document.getElementById('leaveRequestsContainer');
+        if (leaveRes.length === 0) {
+          lCont.innerHTML = '<div style="color:#94a3b8;font-size:13px;padding:10px;">No leave requests found.</div>';
+        } else {
+          lCont.innerHTML = leaveRes.map(l => `
+            <div class="hr-employee-row">
+              <div>
+                <div style="font-weight:700;font-size:13px;color:#0f3a5a;">${l.employee_name}</div>
+                <div style="font-size:11px;color:#94a3b8;margin-top:2px;">${l.type} | ${l.days} days | ${new Date(l.from_date).toISOString().slice(0,10)}</div>
+              </div>
+              <span class="hr-pill" style="${LEAVE_PILLS[l.status] || ''}">${LEAVE_EN[l.status] || l.status}</span>
+            </div>
+          `).join('');
+        }
+      }
+
+      // 3. Departments
+      const deptRes = await NexusAPI.get('/hr/departments');
+      if (deptRes) {
+        const totalEmps = deptRes.reduce((acc, d) => acc + parseInt(d.employee_count||0), 0) || 1;
+        const dCont = document.getElementById('departmentsContainer');
+        if (deptRes.length === 0) {
+          dCont.innerHTML = '<div style="color:#94a3b8;font-size:13px;padding:10px;">No departments found.</div>';
+        } else {
+          dCont.innerHTML = deptRes.map((d, i) => {
+            const count = parseInt(d.employee_count||0);
+            const pct = Math.round((count / totalEmps) * 100);
+            const color = DEPT_COLORS[i % DEPT_COLORS.length];
+            return `
+              <div>
+                <div style="display:flex;justify-content:space-between;font-size:12px;font-weight:600;margin-bottom:4px;">
+                  <span>${d.name}</span><span style="color:${color};">${count} employees</span>
+                </div>
+                <div class="hr-progress-bar"><div class="hr-progress-fill" style="width:${pct}%;background:${color};"></div></div>
+              </div>
+            `;
+          }).join('');
+        }
+      }
+
+    } catch(e) {
+      console.error('HR Data error:', e);
+      if(typeof NexusUI !== 'undefined') NexusUI.showToast('Error loading HR data', 'error');
+    } finally {
+      document.querySelectorAll('.spin').forEach(el => el.style.display = 'none');
+    }
+  }
+
+  // Initialize
+  if(typeof NexusUtils !== 'undefined') NexusUtils.initSidebar('hr');
+  loadHRData();
+})();
+</script>
+</main>
+</body>
+</html>

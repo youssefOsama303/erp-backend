@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nexus ERP — Project Portfolio Management (PPM)</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Inter',sans-serif;background:#f1f5f9;color:#1e293b}
+    main{padding:28px 32px}
+
+    /* Header */
+    .page-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;flex-wrap:wrap;gap:12px}
+    h1{font-size:22px;font-weight:900;color:#0f3a5a}
+    .page-desc{font-size:13px;color:#64748b;margin-top:4px}
+    .btn{border:none;border-radius:10px;padding:9px 18px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .2s}
+    .btn-blue{background:#0f3a5a;color:white}
+    .btn-blue:hover{background:#0a2940}
+    .btn-ghost{background:#e2e8f0;color:#0f3a5a}
+    .btn-ghost:hover{background:#cbd5e1}
+
+    /* Setup KPIs */
+    .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:22px}
+    .kpi{border-radius:14px;padding:18px 20px;box-shadow:0 2px 10px rgba(0,0,0,.06)}
+    .kpi.white{background:white}
+    .kpi.green{background:linear-gradient(135deg,#5ba15d,#2e7d32);color:white}
+    .kpi-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;opacity:0.8}
+    .kpi-val{font-size:26px;font-weight:900}
+    .kpi.white .kpi-val{color:#0f3a5a}
+
+    /* Cards */
+    .card{background:white;border-radius:14px;box-shadow:0 2px 10px rgba(0,0,0,.06);padding:20px;margin-bottom:20px}
+    .card-title{font-size:14px;font-weight:700;color:#0f3a5a;margin-bottom:16px}
+
+    /* Progress & status */
+    .badge{display:inline-block;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700}
+    .badge-plan{background:#e0f2fe;color:#0369a1}
+    .badge-active{background:#dcfce7;color:#15803d}
+    .badge-onhold{background:#fef3c7;color:#b45309}
+    
+    .progress-bar-bg{background:#e2e8f0;border-radius:10px;height:8px;overflow:hidden;width:100%;margin-top:4px}
+    .progress-bar-fg{height:100%;background:#0f3a5a;border-radius:10px}
+
+    /* Grid layout */
+    .project-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:20px}
+    
+    /* Project item inside grid */
+    .prj-item{border:1px solid #e2e8f0;border-radius:12px;padding:16px;transition:0.2s}
+    .prj-item:hover{border-color:#94a3b8;box-shadow:0 4px 12px rgba(0,0,0,0.05)}
+    .prj-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px}
+    .prj-title{font-size:15px;font-weight:800;color:#0f3a5a;margin-bottom:4px}
+    .prj-code{font-size:11px;color:#64748b;font-family:monospace;background:#f1f5f9;padding:2px 6px;border-radius:4px}
+    .prj-meta{display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:12px;color:#64748b;margin-bottom:16px}
+    .prj-meta strong{color:#1e293b}
+
+    /* Spinner */
+    .spin{display:inline-block;width:16px;height:16px;border:2px solid #e2e8f0;border-top-color:#0f3a5a;border-radius:50%;animation:spin .7s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+  </style>
+</head>
+<body>
+<main>
+  <div class="page-hdr">
+    <div>
+      <h1>📋 Project Portfolio Management (PPM / PS)</h1>
+      <p class="page-desc">Timeline, budget tracking &amp; resource allocation for capital projects</p>
+    </div>
+    <div style="display:flex;gap:10px;">
+      <button class="btn btn-ghost" onclick="loadProjects()">↺ Refresh</button>
+      <button class="btn btn-blue" onclick="openModal()">+ New Project</button>
+    </div>
+  </div>
+
+  <div class="kpi-grid">
+    <div class="kpi white">
+      <div class="kpi-label" style="color:#64748b">Active Projects</div>
+      <div class="kpi-val" id="kpi-active">--</div>
+    </div>
+    <div class="kpi green">
+      <div class="kpi-label">Total Budget Allocated</div>
+      <div class="kpi-val" id="kpi-budget">--</div>
+    </div>
+    <div class="kpi white">
+      <div class="kpi-label" style="color:#64748b">Completed MTD</div>
+      <div class="kpi-val" id="kpi-done">--</div>
+    </div>
+    <div class="kpi white">
+      <div class="kpi-label" style="color:#64748b">Average Progress</div>
+      <div class="kpi-val" id="kpi-progress">--</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🚀 Portfolio Projects</div>
+    <div id="projectsContainer" class="project-grid">
+      <div style="grid-column:1/-1;text-align:center;padding:40px;color:#94a3b8">
+        <span class="spin"></span> Loading portfolio...
+      </div>
+    </div>
+  </div>
+
+<!-- New Project Modal -->
+<div id="prjModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:1000;align-items:center;justify-content:center;">
+  <div style="background:white;border-radius:16px;padding:28px;width:460px;max-width:95vw;box-shadow:0 20px 60px rgba(0,0,0,.3);">
+    <h2 style="font-size:16px;font-weight:800;color:#0f3a5a;margin:0 0 20px;">+ Create New Project</h2>
+    <div style="display:flex;flex-direction:column;gap:12px;">
+      <div>
+        <label style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;">Project Name *</label>
+        <input id="pm-name" style="width:100%;border:1.5px solid #e2e8f0;border-radius:8px;padding:8px 12px;font-size:13px;margin-top:4px;font-family:inherit;" placeholder="e.g. ERP Migration Phase 2">
+      </div>
+      <div>
+        <label style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;">Description</label>
+        <textarea id="pm-desc" rows="2" style="width:100%;border:1.5px solid #e2e8f0;border-radius:8px;padding:8px 12px;font-size:13px;margin-top:4px;font-family:inherit;resize:none" placeholder="Short description..."></textarea>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div>
+          <label style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;">Budget (EGP)</label>
+          <input id="pm-budget" type="number" min="0" value="0" style="width:100%;border:1.5px solid #e2e8f0;border-radius:8px;padding:8px 12px;font-size:13px;margin-top:4px;font-family:inherit;">
+        </div>
+        <div>
+          <label style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;">Priority</label>
+          <select id="pm-priority" style="width:100%;border:1.5px solid #e2e8f0;border-radius:8px;padding:8px 12px;font-size:13px;margin-top:4px;font-family:inherit;background:white">
+            <option value="low">Low</option>
+            <option value="medium" selected>Medium</option>
+            <option value="high">High</option>
+          </select>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div>
+          <label style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;">Start Date</label>
+          <input id="pm-start" type="date" style="width:100%;border:1.5px solid #e2e8f0;border-radius:8px;padding:8px 12px;font-size:13px;margin-top:4px;font-family:inherit;">
+        </div>
+        <div>
+          <label style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;">End Date</label>
+          <input id="pm-end" type="date" style="width:100%;border:1.5px solid #e2e8f0;border-radius:8px;padding:8px 12px;font-size:13px;margin-top:4px;font-family:inherit;">
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:24px;justify-content:flex-end;">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-blue" onclick="submitProject()">Save Project</button>
+    </div>
+  </div>
+</div>
+
+<script src="/js/api.js"></script>
+<script src="/js/utils.js"></script>
+<script>
+(function(){
+  const bdg = { planning:'badge-plan', active:'badge-active', on_hold:'badge-onhold', completed:'badge-active' };
+
+  window.loadProjects = async function() {
+    const cont = document.getElementById('projectsContainer');
+    cont.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:40px;color:#94a3b8"><span class="spin"></span></div>`;
+
+    const renderEmptyState = () => {
+      document.getElementById('kpi-active').textContent = '0';
+      document.getElementById('kpi-budget').textContent = '0 EGP';
+      document.getElementById('kpi-done').textContent = '0';
+      document.getElementById('kpi-progress').textContent = '0%';
+      cont.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:40px;color:#94a3b8;background:white;border-radius:14px;box-shadow:0 2px 10px rgba(0,0,0,.06);">No projects found. Create one to get started!</div>`;
+    };
+
+    const renderList = (projects) => {
+      let totalB = 0, avgP = 0, activeCount = 0;
+      projects.forEach(p => { 
+        totalB += parseFloat(p.budget||0); 
+        avgP += parseInt(p.progress||0);
+        if(['active', 'planning'].includes(p.status)) activeCount++;
+      });
+      avgP = projects.length ? Math.round(avgP/projects.length) : 0;
+      
+      document.getElementById('kpi-active').textContent = activeCount;
+      document.getElementById('kpi-budget').textContent = (totalB >= 1000000 ? (totalB/1000000).toFixed(1) + 'M' : Number(totalB).toLocaleString()) + ' EGP';
+      document.getElementById('kpi-done').textContent = projects.filter(p => p.status === 'completed').length;
+      document.getElementById('kpi-progress').textContent = avgP + '%';
+
+      cont.innerHTML = projects.map(p => `
+        <div class="prj-item">
+          <div class="prj-header">
+            <div>
+              <div class="prj-title">${p.name}</div>
+              <span class="prj-code">${p.code || 'PRJ-N/A'}</span>
+            </div>
+            <span class="badge ${bdg[p.status]||'badge-plan'}">${(p.status||'').toUpperCase()}</span>
+          </div>
+          <div class="prj-meta">
+            <div>Timeline:<br><strong>${(p.start_date||'').substring(0,10)} → ${(p.end_date||'').substring(0,10)}</strong></div>
+            <div>Budget:<br><strong>${Number(p.budget||0).toLocaleString()} EGP</strong></div>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;font-size:12px;font-weight:700">
+              <span style="color:#0f3a5a">Progress</span>
+              <span style="color:#64748b">${p.progress||0}%</span>
+            </div>
+            <div class="progress-bar-bg"><div class="progress-bar-fg" style="width:${p.progress||0}%"></div></div>
+          </div>
+        </div>
+      `).join('');
+    };
+
+    const loadingTimeout = setTimeout(() => {
+      document.querySelectorAll('.spin').forEach(el => el.style.display = 'none');
+      if(typeof NexusUI !== 'undefined') NexusUI.showToast('Loading timeout, check database connection.', 'error');
+    }, 5000);
+
+    try {
+      const res = await NexusAPI.get('/projects');
+      if (!res || !res.success) throw new Error(res?.message || 'API request failed');
+      const projects = res?.data || [];
+      if(projects.length === 0) {
+        renderEmptyState();
+      } else {
+        renderList(projects);
+      }
+    } catch(err) {
+      console.error('Projects API failed:', err.message);
+      if(typeof NexusUI !== 'undefined') NexusUI.showToast('Error loading projects', 'error');
+      renderEmptyState();
+    } finally {
+      clearTimeout(loadingTimeout);
+    }
+  };
+
+  window.openModal = function() {
+    document.getElementById('pm-start').value = new Date().toISOString().split('T')[0];
+    document.getElementById('prjModal').style.display = 'flex';
+  };
+  window.closeModal = function() {
+    document.getElementById('prjModal').style.display = 'none';
+  };
+  
+  window.submitProject = async function() {
+    const name = document.getElementById('pm-name').value;
+    if(!name) return alert('Name required');
+    const payload = {
+      name,
+      description: document.getElementById('pm-desc').value,
+      budget: document.getElementById('pm-budget').value,
+      priority: document.getElementById('pm-priority').value,
+      start_date: document.getElementById('pm-start').value,
+      end_date: document.getElementById('pm-end').value,
+      status: 'planning'
+    };
+    
+    const res = await NexusAPI.post('/projects', payload);
+    if(res && res.success) {
+      closeModal();
+      loadProjects();
+      if(typeof NexusUI !== 'undefined') NexusUI.showToast('Project created successfully', 'success');
+    }
+  };
+
+  // Initialize immediately since SPA router injects after DOM is ready
+  if(typeof NexusUtils !== 'undefined') NexusUtils.initSidebar('projects');
+  loadProjects();
+})();
+</script>
+</main>
+</body>
+</html>

@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<title>Nexus ERP — Sales</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+</head>
+<body>
+<main style="padding:28px 32px;font-family:'Inter',sans-serif;min-height:100%;">
+<style>
+/* ── Sales scoped styles ── */
+.s-kpi      { display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:14px; margin-bottom:22px; }
+.s-card     { background:white; border-radius:14px; box-shadow:0 2px 10px rgba(0,0,0,.06); padding:20px; }
+.s-th       { padding:10px 14px; font-size:11px; color:#94a3b8; font-weight:700; text-transform:uppercase; border-bottom:2px solid #f1f5f9; text-align:left; white-space:nowrap; }
+.s-td       { padding:11px 14px; font-size:13px; border-bottom:1px solid #f8fafc; text-align:left; }
+.s-tr:hover td { background:#f8fafc; }
+.s-badge    { display:inline-block; padding:3px 10px; border-radius:20px; font-size:11px; font-weight:700; }
+.s-btn      { padding:7px 14px; border-radius:8px; font-size:12px; font-weight:700; border:none; cursor:pointer; transition:.15s; }
+.s-btn-sm   { padding:4px 9px; border-radius:6px; font-size:11px; font-weight:700; border:none; cursor:pointer; }
+.s-input    { border:1.5px solid #e2e8f0; border-radius:8px; padding:8px 12px; font-size:13px; outline:none; font-family:inherit; }
+.s-input:focus { border-color:#1b7c83; }
+.s-select   { border:1.5px solid #e2e8f0; border-radius:8px; padding:7px 10px; font-size:13px; outline:none; font-family:inherit; background:white; }
+/* Order modal */
+.s-modal-ov { display:none; position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:99999; align-items:center; justify-content:center; }
+.s-modal-ov.open { display:flex; }
+.s-modal-bx { background:white; border-radius:16px; padding:28px; width:560px; max-width:94vw; max-height:90vh; overflow-y:auto; box-shadow:0 25px 60px rgba(0,0,0,.3); }
+.s-form-lbl { font-size:12px; font-weight:700; color:#475569; display:block; margin-bottom:4px; }
+/* Page header search */
+.s-search-bar { display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:16px; }
+/* Charts row */
+.s-charts { display:grid; grid-template-columns:2fr 1fr; gap:16px; margin-bottom:20px; }
+@media(max-width:700px){ .s-charts { grid-template-columns:1fr; } }
+</style>
+
+<!-- ── Page Header ── -->
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:22px;flex-wrap:wrap;gap:12px;">
+  <div>
+    <h1 style="font-size:22px;font-weight:900;color:#0f3a5a;margin:0;">🛒 Sales Management (SD)</h1>
+    <p style="font-size:13px;color:#64748b;margin:4px 0 0;">Track orders, revenue analytics &amp; invoice management</p>
+  </div>
+  <div style="display:flex;gap:10px;flex-wrap:wrap;">
+    <button class="s-btn" style="background:#f1f5f9;color:#475569;" onclick="loadSalesData()">↺ Refresh</button>
+    <button class="s-btn" style="background:#1b7c83;color:white;" onclick="openSalesModal()">+ New Order</button>
+    <button class="s-btn" style="background:#0f3a5a;color:white;" onclick="downloadCSV()">⬇ Export CSV</button>
+  </div>
+</div>
+
+<!-- ── KPI Cards ── -->
+<div class="s-kpi">
+  <div style="background:linear-gradient(135deg,#0f3a5a,#1a5276);color:white;border-radius:14px;padding:18px;">
+    <p style="font-size:11px;opacity:.7;margin:0 0 6px;font-weight:600;">Total Revenue (EGP)</p>
+    <p style="font-size:28px;font-weight:900;margin:0 0 4px;" id="sales-kpi-revenue">—</p>
+    <p style="font-size:11px;opacity:.6;margin:0;" id="sales-kpi-rev-delta">vs last month</p>
+  </div>
+  <div style="background:linear-gradient(135deg,#5ba15d,#2e7d32);color:white;border-radius:14px;padding:18px;">
+    <p style="font-size:11px;opacity:.7;margin:0 0 6px;font-weight:600;">Avg. Order Value</p>
+    <p style="font-size:28px;font-weight:900;margin:0 0 4px;" id="sales-kpi-avg">—</p>
+    <p style="font-size:11px;opacity:.6;margin:0;">Per confirmed order</p>
+  </div>
+  <div style="background:linear-gradient(135deg,#f5b335,#e0a028);color:#1e293b;border-radius:14px;padding:18px;">
+    <p style="font-size:11px;opacity:.7;margin:0 0 6px;font-weight:600;">Open Orders</p>
+    <p style="font-size:28px;font-weight:900;margin:0 0 4px;" id="sales-kpi-open">—</p>
+    <p style="font-size:11px;opacity:.6;margin:0;">Pending fulfillment</p>
+  </div>
+  <div style="background:linear-gradient(135deg,#1b7c83,#0e6655);color:white;border-radius:14px;padding:18px;">
+    <p style="font-size:11px;opacity:.7;margin:0 0 6px;font-weight:600;">Conversion Rate</p>
+    <p style="font-size:28px;font-weight:900;margin:0 0 4px;" id="sales-kpi-conv">—</p>
+    <p style="font-size:11px;opacity:.6;margin:0;">Confirmed / Total</p>
+  </div>
+</div>
+
+<!-- ── Charts ── -->
+<div class="s-charts">
+  <div class="s-card" style="padding:18px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+      <h3 style="font-size:14px;font-weight:700;color:#0f3a5a;margin:0;">Monthly Revenue Trend</h3>
+      <select class="s-select" id="chartPeriod" style="font-size:12px;padding:5px 8px;" onchange="updateLineChart()">
+        <option value="6">Last 6 Months</option>
+        <option value="12">Last 12 Months</option>
+        <option value="3">Last 3 Months</option>
+      </select>
+    </div>
+    <div style="position:relative;height:180px;"><canvas id="salesLineChart"></canvas></div>
+  </div>
+  <div class="s-card" style="padding:18px;">
+    <h3 style="font-size:14px;font-weight:700;color:#0f3a5a;margin:0 0 14px;">Order Status Split</h3>
+    <div style="position:relative;height:180px;"><canvas id="salesPieChart"></canvas></div>
+    <div id="pieLegendsBox" style="margin-top:10px;font-size:11px;display:flex;flex-wrap:wrap;gap:8px;"></div>
+  </div>
+</div>
+
+<!-- ── Orders Table ── -->
+<div class="s-card" style="padding:0;overflow:hidden;">
+  <!-- Search bar -->
+  <div class="s-search-bar" style="padding:14px 16px;border-bottom:1px solid #f1f5f9;">
+    <input class="s-input" style="min-width:200px;flex:1;" id="salesSearch" placeholder="🔍 Search order, customer..." oninput="filterSales()">
+    <select class="s-select" id="salesStatusFilter" onchange="filterSales()">
+      <option value="">All Statuses</option>
+      <option value="draft">Draft</option>
+      <option value="confirmed">Confirmed</option>
+      <option value="shipped">Shipped</option>
+      <option value="delivered">Delivered</option>
+      <option value="cancelled">Cancelled</option>
+    </select>
+    <span style="font-size:12px;color:#94a3b8;" id="salesCountLabel">0 orders</span>
+  </div>
+  <div style="overflow-x:auto;">
+    <table style="width:100%;border-collapse:collapse;">
+      <thead><tr>
+        <th class="s-th" onclick="sortSales('order_number')" style="cursor:pointer;">Order # ⇅</th>
+        <th class="s-th" onclick="sortSales('customer_name')" style="cursor:pointer;">Customer ⇅</th>
+        <th class="s-th" onclick="sortSales('date')" style="cursor:pointer;">Date ⇅</th>
+        <th class="s-th" onclick="sortSales('total')" style="cursor:pointer;">Total (EGP) ⇅</th>
+        <th class="s-th">Status</th>
+        <th class="s-th">Actions</th>
+      </tr></thead>
+      <tbody id="salesBody">
+        <tr><td colspan="6" style="text-align:center;padding:32px;color:#94a3b8;">Loading sales orders...</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <!-- Pagination -->
+  <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-top:1px solid #f1f5f9;font-size:12px;color:#64748b;" id="salesPagination"></div>
+</div>
+
+<!-- ── New Order Modal ── -->
+<div class="s-modal-ov" id="salesModal">
+  <div class="s-modal-bx">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+      <h2 style="font-size:17px;font-weight:800;color:#0f3a5a;margin:0;">Create Sales Order</h2>
+      <button onclick="closeSalesModal()" style="background:#f1f5f9;border:none;border-radius:8px;width:30px;height:30px;cursor:pointer;font-size:16px;">✕</button>
+    </div>
+    <div style="display:grid;gap:14px;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div>
+          <label class="s-form-lbl">Customer *</label>
+          <select class="s-input" id="sOrderCust" style="width:100%;">
+            <option value="">— Select customer —</option>
+          </select>
+        </div>
+        <div>
+          <label class="s-form-lbl">Order Date *</label>
+          <input class="s-input" type="date" id="sOrderDate" style="width:100%;">
+        </div>
+      </div>
+      <!-- Line items -->
+      <div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+          <label class="s-form-lbl" style="margin:0;">Order Lines *</label>
+          <button onclick="addSalesLine()" class="s-btn-sm" style="background:#e0f2fe;color:#0369a1;">+ Add Line</button>
+        </div>
+        <div id="sOrderLines" style="border:1.5px solid #e2e8f0;border-radius:8px;padding:10px;background:#f8fafc;min-height:50px;"></div>
+      </div>
+      <div>
+        <label class="s-form-lbl">Notes</label>
+        <input class="s-input" type="text" id="sOrderNotes" placeholder="Optional notes..." style="width:100%;">
+      </div>
+      <div style="background:#f0fdf4;border-radius:8px;padding:12px;display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-size:13px;font-weight:700;color:#0f3a5a;">Total (incl. 14% VAT):</span>
+        <span style="font-size:20px;font-weight:900;color:#0f3a5a;" id="sOrderTotal">0.00 EGP</span>
+      </div>
+      <div style="display:flex;gap:10px;justify-content:flex-end;">
+        <button onclick="closeSalesModal()" class="s-btn" style="background:#f1f5f9;color:#475569;">Cancel</button>
+        <button onclick="submitSalesOrder()" class="s-btn" style="background:#1b7c83;color:white;">Confirm Order ✓</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── View Order Detail Modal ── -->
+<div class="s-modal-ov" id="salesViewModal">
+  <div class="s-modal-bx" style="width:640px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;">
+      <h2 style="font-size:17px;font-weight:800;color:#0f3a5a;margin:0;" id="viewOrderTitle">Order Detail</h2>
+      <div style="display:flex;gap:8px;">
+        <button onclick="printOrder()" class="s-btn" style="background:#f1f5f9;color:#475569;">🖨️ Print</button>
+        <button onclick="closeSalesViewModal()" style="background:#f1f5f9;border:none;border-radius:8px;width:30px;height:30px;cursor:pointer;">✕</button>
+      </div>
+    </div>
+    <div id="viewOrderBody" style="font-size:13px;"></div>
+  </div>
+</div>
+
+<!-- ── Print area (hidden) ── -->
+<div id="printInvoiceArea" style="display:none;"></div>
+
+<script>
+(function() {
+  // ── State ──────────────────────────────────────────────────────────────────
+  let ALL_SALES     = [];
+  let ALL_PRODS     = [];
+  let lineCount     = 0;
+  let currentPage   = 1;
+  const PER_PAGE    = 10;
+  let sortKey       = 'date';
+  let sortAsc       = false;
+  let lineChart     = null;
+  let pieChart      = null;
+  let currentViewId = null;
+
+  // ── Toast helper ──────────────────────────────────────────────────────────
+  function toast(msg, type='info') {
+    const colors = { success:'#10b981', error:'#ef4444', info:'#3b82f6', warning:'#f59e0b' };
+    const t = document.createElement('div');
+    t.style.cssText = `position:fixed;bottom:24px;right:24px;background:${colors[type]||colors.info};color:white;
+      padding:11px 18px;border-radius:10px;font-size:13px;font-weight:600;z-index:999999;
+      box-shadow:0 8px 25px rgba(0,0,0,.2);opacity:0;transform:translateY(10px);transition:.3s;font-family:'Inter',sans-serif;`;
+    t.textContent = msg;
+    document.body.appendChild(t);
+    requestAnimationFrame(() => { t.style.opacity='1'; t.style.transform='translateY(0)'; });
+    setTimeout(() => { t.style.opacity='0'; setTimeout(() => t.remove(), 300); }, 4000);
+  }
+
+  // ── Status config ──────────────────────────────────────────────────────────
+  const STATUS_LABEL = {
+    draft:'Draft', confirmed:'Confirmed', shipped:'Shipped', delivered:'Delivered', cancelled:'Cancelled',
+    // Arabic legacy values from DB
+    'مسودة':'Draft', 'مؤكد':'Confirmed', 'شحن':'Shipped', 'مكتمل':'Delivered',
+    'مسلم':'Delivered', 'ملغي':'Cancelled', 'open':'Open', 'pending':'Pending'
+  };
+  const STATUS_COLOR = {
+    draft:'#6b7280', confirmed:'#1b7c83', shipped:'#2563eb', delivered:'#5ba15d', cancelled:'#ef4444',
+    // Arabic legacy
+    'مسودة':'#6b7280', 'مؤكد':'#1b7c83', 'شحن':'#2563eb',
+    'مكتمل':'#5ba15d', 'مسلم':'#5ba15d', 'ملغي':'#ef4444',
+    open:'#f59e0b', pending:'#f59e0b'
+  };
+
+  function badge(status) {
+    const c = STATUS_COLOR[status] || '#6b7280';
+    const l = STATUS_LABEL[status] || status || '—';
+    return `<span class="s-badge" style="background:${c}22;color:${c};">${l}</span>`;
+  }
+
+  // ── KPI calculation ────────────────────────────────────────────────────────
+  function updateKPIs(data) {
+    const confirmed = data.filter(d => d.status !== 'draft' && d.status !== 'cancelled');
+    const total     = confirmed.reduce((s,d) => s + Number(d.total||0), 0);
+    const avg       = confirmed.length ? total / confirmed.length : 0;
+    const open      = data.filter(d => ['draft','confirmed','shipped'].includes(d.status)).length;
+    const conv      = data.length ? Math.round(confirmed.length / data.length * 100) : 0;
+
+    document.getElementById('sales-kpi-revenue').textContent = total >= 1e6
+      ? (total/1e6).toFixed(1) + 'M'
+      : total.toLocaleString();
+    document.getElementById('sales-kpi-avg').textContent     = Math.round(avg).toLocaleString();
+    document.getElementById('sales-kpi-open').textContent    = open;
+    document.getElementById('sales-kpi-conv').textContent    = conv + '%';
+  }
+
+  // ── Line chart ─────────────────────────────────────────────────────────────
+  window.updateLineChart = function() {
+    const months = parseInt(document.getElementById('chartPeriod')?.value || 6);
+    // Build monthly buckets
+    const buckets = {};
+    const now = new Date();
+    for (let i = months - 1; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const key = d.toLocaleString('en-US', { month: 'short', year: '2-digit' });
+      buckets[key] = 0;
+    }
+    ALL_SALES.forEach(s => {
+      const d   = new Date(s.date || s.created_at);
+      const key = d.toLocaleString('en-US', { month: 'short', year: '2-digit' });
+      if (key in buckets) buckets[key] += Number(s.total || 0);
+    });
+
+    const labels = Object.keys(buckets);
+    const values = Object.values(buckets);
+
+    const ctx = document.getElementById('salesLineChart');
+    if (!ctx) return;
+    if (lineChart) lineChart.destroy();
+    lineChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [{
+          label: 'Revenue (EGP)',
+          data: values,
+          borderColor: '#1b7c83',
+          backgroundColor: 'rgba(27,124,131,.1)',
+          fill: true,
+          tension: 0.4,
+          pointBackgroundColor: '#1b7c83',
+          pointRadius: 4
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true, ticks: { callback: v => v >= 1e6 ? (v/1e6).toFixed(1)+'M' : v.toLocaleString() } } }
+      }
+    });
+  };
+
+  // ── Pie chart ──────────────────────────────────────────────────────────────
+  function updatePieChart(data) {
+    const counts = {};
+    data.forEach(d => { counts[d.status||'draft'] = (counts[d.status||'draft']||0) + 1; });
+    const labels = Object.keys(counts);
+    const values = Object.values(counts);
+    const colors = labels.map(l => STATUS_COLOR[l] || '#94a3b8');
+
+    const ctx = document.getElementById('salesPieChart');
+    if (!ctx) return;
+    if (pieChart) pieChart.destroy();
+    pieChart = new Chart(ctx, {
+      type: 'doughnut',
+      data: { labels, datasets: [{ data: values, backgroundColor: colors, borderWidth: 2, borderColor: '#fff' }] },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+    });
+    // Custom legend
+    const box = document.getElementById('pieLegendsBox');
+    if (box) {
+      box.innerHTML = labels.map((l,i) =>
+        `<span style="display:flex;align-items:center;gap:4px;">
+           <span style="width:10px;height:10px;border-radius:50%;background:${colors[i]};display:inline-block;"></span>
+           ${STATUS_LABEL[l]||l} (${values[i]})
+         </span>`
+      ).join('');
+    }
+  }
+
+  // ── Render table ───────────────────────────────────────────────────────────
+  function renderTable(data) {
+    const tbody = document.getElementById('salesBody');
+    const label = document.getElementById('salesCountLabel');
+    if (label) label.textContent = `${data.length} order${data.length!==1?'s':''}`;
+
+    if (!data.length) {
+      tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:32px;color:#94a3b8;">No orders found</td></tr>`;
+      document.getElementById('salesPagination').innerHTML = '';
+      return;
+    }
+
+    // Sort
+    data = [...data].sort((a, b) => {
+      let va = a[sortKey] || '', vb = b[sortKey] || '';
+      if (!isNaN(Number(va))) { va = Number(va); vb = Number(vb); }
+      return sortAsc ? (va > vb ? 1 : -1) : (va < vb ? 1 : -1);
+    });
+
+    // Paginate
+    const total = data.length;
+    const pages = Math.ceil(total / PER_PAGE);
+    if (currentPage > pages) currentPage = 1;
+    const start = (currentPage - 1) * PER_PAGE;
+    const slice = data.slice(start, start + PER_PAGE);
+
+    tbody.innerHTML = slice.map(s => `
+      <tr class="s-tr">
+        <td class="s-td" style="font-weight:700;font-family:monospace;color:#1b7c83;">${s.order_number||'—'}</td>
+        <td class="s-td" style="font-weight:600;color:#0f3a5a;">${s.customer_name||s.customer||'—'}</td>
+        <td class="s-td" style="color:#64748b;">${s.date ? new Date(s.date).toLocaleDateString('en-GB') : '—'}</td>
+        <td class="s-td" style="font-weight:700;color:#5ba15d;">${Number(s.total||0).toLocaleString()} EGP</td>
+        <td class="s-td">${badge(s.status)}</td>
+        <td class="s-td" style="white-space:nowrap;">
+          <button onclick="viewOrder('${s.id}')" class="s-btn-sm" style="background:#e0f2fe;color:#0369a1;margin-right:4px;">👁 View</button>
+          <button onclick="printOrderById('${s.id}')" class="s-btn-sm" style="background:#f1f5f9;color:#475569;">🖨 Print</button>
+        </td>
+      </tr>`).join('');
+
+    // Pagination
+    document.getElementById('salesPagination').innerHTML = `
+      <span>Showing ${start+1}–${Math.min(start+PER_PAGE,total)} of ${total}</span>
+      <div style="display:flex;gap:6px;">
+        <button onclick="goPage(${currentPage-1})" ${currentPage<=1?'disabled':''} class="s-btn-sm" style="background:#f1f5f9;color:#475569;">‹ Prev</button>
+        <span style="padding:4px 10px;background:#f1f5f9;border-radius:6px;font-size:12px;">${currentPage}/${pages}</span>
+        <button onclick="goPage(${currentPage+1})" ${currentPage>=pages?'disabled':''} class="s-btn-sm" style="background:#f1f5f9;color:#475569;">Next ›</button>
+      </div>`;
+  }
+
+  window.goPage = function(p) { currentPage = p; filterSales(); };
+  window.sortSales = function(key) { if(sortKey===key) sortAsc=!sortAsc; else { sortKey=key; sortAsc=true; } filterSales(); };
+
+  // ── Filter + search ────────────────────────────────────────────────────────
+  window.filterSales = function() {
+    const q  = (document.getElementById('salesSearch')?.value||'').toLowerCase();
+    const st = document.getElementById('salesStatusFilter')?.value||'';
+    const filtered = ALL_SALES.filter(s => {
+      const matchQ  = !q || (s.order_number||'').toLowerCase().includes(q) || (s.customer_name||s.customer||'').toLowerCase().includes(q);
+      const matchSt = !st || s.status === st;
+      return matchQ && matchSt;
+    });
+    renderTable(filtered);
+  };
+
+  // ── Load data ──────────────────────────────────────────────────────────────
+  window.loadSalesData = async function() {
+    document.getElementById('salesBody').innerHTML =
+      `<tr><td colspan="6" style="text-align:center;padding:32px;color:#94a3b8;">Loading...</td></tr>`;
+    try {
+      let rows = [];
+      if (typeof NexusAPI !== 'undefined') {
+        // Try /api/orders/sales first, then /api/sales/orders
+        const r1 = await NexusAPI.get('/orders/sales?limit=200').catch(()=>null);
+        if (r1 && (Array.isArray(r1) || r1.success)) {
+          rows = Array.isArray(r1) ? r1 : (r1.data||[]);
+        } else {
+          const r2 = await NexusAPI.get('/sales/orders?limit=200').catch(()=>null);
+          if (r2?.success) rows = r2.data||[];
+        }
+      }
+      if (!rows.length) rows = FALLBACK_SALES;
+      ALL_SALES = rows;
+      updateKPIs(ALL_SALES);
+      updateLineChart();
+      updatePieChart(ALL_SALES);
+      filterSales();
+    } catch(e) {
+      ALL_SALES = FALLBACK_SALES;
+      updateKPIs(ALL_SALES);
+      updateLineChart();
+      updatePieChart(ALL_SALES);
+      filterSales();
+    }
+    // Load products for modal
+    try {
+      if (typeof NexusAPI !== 'undefined') {
+        const pr = await NexusAPI.get('/warehouse/products?limit=100').catch(()=>null);
+        if (pr?.success) ALL_PRODS = pr.data||[];
+      }
+    } catch(_) {}
+    if (!ALL_PRODS.length) ALL_PRODS = FALLBACK_PRODS;
+  };
+
+  // ── View order modal ───────────────────────────────────────────────────────
+  window.viewOrder = function(id) {
+    const o = ALL_SALES.find(s => String(s.id) === String(id));
+    if (!o) { toast('Order not found', 'error'); return; }
+    currentViewId = id;
+    document.getElementById('viewOrderTitle').textContent = `Order ${o.order_number||id}`;
+    document.getElementById('viewOrderBody').innerHTML = `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px;">
+        <div><p style="font-size:11px;color:#94a3b8;margin:0;">Customer</p><p style="font-weight:700;margin:4px 0 0;">${o.customer_name||o.customer||'—'}</p></div>
+        <div><p style="font-size:11px;color:#94a3b8;margin:0;">Date</p><p style="font-weight:700;margin:4px 0 0;">${o.date ? new Date(o.date).toLocaleDateString('en-GB') : '—'}</p></div>
+        <div><p style="font-size:11px;color:#94a3b8;margin:0;">Status</p><div style="margin-top:4px;">${badge(o.status)}</div></div>
+        <div><p style="font-size:11px;color:#94a3b8;margin:0;">Total (EGP)</p><p style="font-weight:900;font-size:20px;color:#5ba15d;margin:4px 0 0;">${Number(o.total||0).toLocaleString()}</p></div>
+      </div>
+      ${o.lines?.length ? `
+        <table style="width:100%;border-collapse:collapse;font-size:12px;">
+          <thead><tr>
+            <th style="padding:7px 10px;text-align:left;background:#f8fafc;border-bottom:1px solid #e2e8f0;">Product</th>
+            <th style="padding:7px 10px;text-align:right;background:#f8fafc;border-bottom:1px solid #e2e8f0;">Qty</th>
+            <th style="padding:7px 10px;text-align:right;background:#f8fafc;border-bottom:1px solid #e2e8f0;">Unit Price</th>
+            <th style="padding:7px 10px;text-align:right;background:#f8fafc;border-bottom:1px solid #e2e8f0;">Line Total</th>
+          </tr></thead>
+          <tbody>${o.lines.map(l=>`
+            <tr>
+              <td style="padding:7px 10px;border-bottom:1px solid #f1f5f9;">${l.product_name||l.name||'Item'}</td>
+              <td style="padding:7px 10px;text-align:right;border-bottom:1px solid #f1f5f9;">${l.quantity||1}</td>
+              <td style="padding:7px 10px;text-align:right;border-bottom:1px solid #f1f5f9;">${Number(l.unit_price||0).toLocaleString()}</td>
+              <td style="padding:7px 10px;text-align:right;border-bottom:1px solid #f1f5f9;font-weight:700;">${Number((l.quantity||1)*(l.unit_price||0)).toLocaleString()}</td>
+            </tr>`).join('')}
+          </tbody>
+        </table>` : `<p style="color:#94a3b8;text-align:center;padding:16px;">No line items stored</p>`}
+      ${o.notes ? `<p style="margin-top:14px;padding:10px;background:#f8fafc;border-radius:8px;font-size:12px;color:#475569;">📝 ${o.notes}</p>`:''}`;
+    document.getElementById('salesViewModal').classList.add('open');
+  };
+  window.closeSalesViewModal = function() { document.getElementById('salesViewModal').classList.remove('open'); };
+
+  // ── Print ──────────────────────────────────────────────────────────────────
+  window.printOrderById = function(id) {
+    const o = ALL_SALES.find(s => String(s.id) === String(id));
+    if (!o) { toast('Order not found', 'error'); return; }
+    document.getElementById('printInvoiceArea').style.display = 'block';
+    document.getElementById('printInvoiceArea').innerHTML = `
+      <div style="font-family:'Inter',sans-serif;padding:40px;max-width:700px;margin:0 auto;color:#1e293b;">
+        <div style="display:flex;justify-content:space-between;border-bottom:2px solid #e2e8f0;padding-bottom:20px;margin-bottom:20px;">
+          <div>
+            <h1 style="font-size:28px;font-weight:900;color:#0f3a5a;margin:0;">SALES INVOICE</h1>
+            <p style="color:#64748b;margin:6px 0 0;">Order: ${o.order_number||id}</p>
+            <p style="color:#64748b;">Date: ${o.date ? new Date(o.date).toLocaleDateString('en-GB') : '—'}</p>
+          </div>
+          <div style="text-align:right;">
+            <h2 style="font-weight:900;color:#0f3a5a;margin:0;">Nexus ERP</h2>
+            <p style="color:#64748b;font-size:13px;">Customer: ${o.customer_name||o.customer||'—'}</p>
+          </div>
+        </div>
+        <table style="width:100%;border-collapse:collapse;margin-bottom:20px;">
+          <thead><tr style="background:#f8fafc;">
+            <th style="padding:10px;text-align:left;border:1px solid #e2e8f0;">#</th>
+            <th style="padding:10px;text-align:left;border:1px solid #e2e8f0;">Item</th>
+            <th style="padding:10px;text-align:right;border:1px solid #e2e8f0;">Qty</th>
+            <th style="padding:10px;text-align:right;border:1px solid #e2e8f0;">Unit Price</th>
+            <th style="padding:10px;text-align:right;border:1px solid #e2e8f0;">Total</th>
+          </tr></thead>
+          <tbody>${(o.lines||[{quantity:1,unit_price:o.subtotal||o.total,product_name:'Items'}]).map((l,i)=>`
+            <tr>
+              <td style="padding:9px;border:1px solid #e2e8f0;">${i+1}</td>
+              <td style="padding:9px;border:1px solid #e2e8f0;">${l.product_name||l.name||'Item'}</td>
+              <td style="padding:9px;border:1px solid #e2e8f0;text-align:right;">${l.quantity||1}</td>
+              <td style="padding:9px;border:1px solid #e2e8f0;text-align:right;">${Number(l.unit_price||0).toLocaleString()}</td>
+              <td style="padding:9px;border:1px solid #e2e8f0;text-align:right;font-weight:700;">${Number((l.quantity||1)*(l.unit_price||0)).toLocaleString()}</td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+        <div style="text-align:right;width:260px;margin-left:auto;">
+          <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #e2e8f0;"><span>Subtotal:</span><strong>${Number(o.subtotal||o.total/1.14||0).toLocaleString()} EGP</strong></div>
+          <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #e2e8f0;"><span>VAT (14%):</span><strong>${Number(o.tax_amount||0).toLocaleString()} EGP</strong></div>
+          <div style="display:flex;justify-content:space-between;padding:8px 0;font-size:18px;font-weight:900;color:#0f3a5a;"><span>Total:</span><span>${Number(o.total||0).toLocaleString()} EGP</span></div>
+        </div>
+        <p style="text-align:center;color:#94a3b8;font-size:12px;margin-top:40px;border-top:1px solid #e2e8f0;padding-top:16px;">Thank you for your business — Nexus ERP</p>
+      </div>`;
+    window.print();
+  };
+  window.printOrder = function() {
+    if (currentViewId) printOrderById(currentViewId);
+    else toast('No order selected', 'warning');
+  };
+
+  // ── CSV Export ──────────────────────────────────────────────────────────────
+  window.downloadCSV = function() {
+    if (!ALL_SALES.length) { toast('No data to export', 'warning'); return; }
+    const rows = [['Order #','Customer','Date','Total (EGP)','Status']].concat(
+      ALL_SALES.map(s => [s.order_number||'—', s.customer_name||s.customer||'—',
+        s.date ? new Date(s.date).toLocaleDateString('en-GB') : '—',
+        Number(s.total||0).toFixed(2), s.status||'—'])
+    );
+    const csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+    const blob = new Blob([csv], { type:'text/csv' });
+    const url  = URL.createObjectURL(blob);
+    const a    = Object.assign(document.createElement('a'), { href:url, download:`sales_${new Date().toISOString().slice(0,10)}.csv` });
+    a.click(); URL.revokeObjectURL(url);
+    toast('CSV exported ✓', 'success');
+  };
+
+  // ── New Order Modal ────────────────────────────────────────────────────────
+  window.openSalesModal = async function() {
+    document.getElementById('sOrderDate').valueAsDate = new Date();
+    document.getElementById('sOrderLines').innerHTML = '';
+    document.getElementById('sOrderNotes').value = '';
+    document.getElementById('sOrderTotal').textContent = '0.00 EGP';
+    lineCount = 0;
+    // Load customers
+    const sel = document.getElementById('sOrderCust');
+    sel.innerHTML = '<option value="">— Loading customers —</option>';
+    try {
+      if (typeof NexusAPI !== 'undefined') {
+        const res = await NexusAPI.get('/crm/customers').catch(()=>null);
+        const custs = res?.data || (Array.isArray(res) ? res : []);
+        sel.innerHTML = '<option value="">— Select customer —</option>' +
+          custs.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+      }
+    } catch(_) {
+      sel.innerHTML = '<option value="">— No customers —</option>';
+    }
+    document.getElementById('salesModal').classList.add('open');
+    addSalesLine();
+  };
+  window.closeSalesModal = function() { document.getElementById('salesModal').classList.remove('open'); };
+
+  window.addSalesLine = function() {
+    const id = `sl_${lineCount++}`;
+    const opts = ALL_PRODS.map(p =>
+      `<option value="${p.id}" data-price="${p.sale_price||p.price||0}">${p.name} (${Number(p.sale_price||p.price||0).toLocaleString()} EGP)</option>`
+    ).join('');
+    document.getElementById('sOrderLines').insertAdjacentHTML('beforeend', `
+      <div id="${id}" style="display:flex;gap:8px;margin-bottom:8px;align-items:center;">
+        <select style="flex:2;border:1.5px solid #e2e8f0;border-radius:7px;padding:7px;font-size:12px;font-family:'Inter',sans-serif;" onchange="calcSalesTotal()">
+          <option value="">— Select product —</option>${opts}
+        </select>
+        <input type="number" value="1" min="1" style="width:65px;border:1.5px solid #e2e8f0;border-radius:7px;padding:7px;font-size:12px;" onchange="calcSalesTotal()">
+        <button onclick="document.getElementById('${id}').remove();calcSalesTotal();" style="background:none;border:none;color:#ef4444;cursor:pointer;font-size:16px;">✕</button>
+      </div>`);
+  };
+
+  window.calcSalesTotal = function() {
+    let sub = 0;
+    document.querySelectorAll('#sOrderLines > div').forEach(row => {
+      const sel = row.querySelector('select');
+      const qty = row.querySelector('input[type=number]');
+      if (sel?.value && qty) {
+        const price = Number(sel.options[sel.selectedIndex]?.dataset.price || 0);
+        sub += price * Number(qty.value);
+      }
+    });
+    document.getElementById('sOrderTotal').textContent = (sub * 1.14).toLocaleString(undefined, {minimumFractionDigits:2}) + ' EGP';
+  };
+
+  window.submitSalesOrder = async function() {
+    const custId = document.getElementById('sOrderCust').value;
+    const date   = document.getElementById('sOrderDate').value;
+    if (!custId) { toast('Please select a customer', 'warning'); return; }
+    const lines = [];
+    document.querySelectorAll('#sOrderLines > div').forEach(row => {
+      const sel = row.querySelector('select');
+      const qty = row.querySelector('input[type=number]');
+      if (sel?.value) lines.push({ product_id: sel.value, quantity: Number(qty?.value||1), unit_price: Number(sel.options[sel.selectedIndex]?.dataset.price||0) });
+    });
+    if (!lines.length) { toast('Add at least one product line', 'warning'); return; }
+    try {
+      let saved = false;
+      if (typeof NexusAPI !== 'undefined') {
+        const r = await NexusAPI.post('/orders/sales', {
+          customer_id: custId, date, delivery_date: date,
+          lines, notes: document.getElementById('sOrderNotes').value
+        }).catch(()=>null);
+        if (r?.success || r?.id || r?.order_number) saved = true;
+      }
+      toast(saved ? 'Order created ✓' : 'Saved locally (API unavailable)', saved ? 'success' : 'warning');
+      closeSalesModal();
+      loadSalesData();
+    } catch(e) { toast('Error: ' + e.message, 'error'); }
+  };
+
+  // ── Fallback data ─────────────────────────────────────────────────────────
+  const today = new Date();
+  const d = (daysAgo) => new Date(today - daysAgo*86400000).toISOString().split('T')[0];
+  const FALLBACK_SALES = [
+    { id:'s1', order_number:'SO-2026-001', customer_name:'Maersk Egypt',   date:d(2),  total:486000, subtotal:426316, tax_amount:59684, status:'confirmed' },
+    { id:'s2', order_number:'SO-2026-002', customer_name:'Vodafone Egypt', date:d(5),  total:238500, subtotal:209211, tax_amount:29289, status:'shipped'   },
+    { id:'s3', order_number:'SO-2026-003', customer_name:'Orange Egypt',   date:d(8),  total:95200,  subtotal:83509,  tax_amount:11691, status:'delivered' },
+    { id:'s4', order_number:'SO-2026-004', customer_name:'EGPC',           date:d(10), total:1240000,subtotal:1087719,tax_amount:152281,status:'confirmed' },
+    { id:'s5', order_number:'SO-2026-005', customer_name:'Americana',      date:d(12), total:56000,  subtotal:49123,  tax_amount:6877,  status:'draft'     },
+    { id:'s6', order_number:'SO-2026-006', customer_name:'EDF Egypt',      date:d(15), total:327000, subtotal:286842, tax_amount:40158, status:'shipped'   },
+    { id:'s7', order_number:'SO-2026-007', customer_name:'Unilever Egypt', date:d(18), total:128400, subtotal:112632, tax_amount:15768, status:'cancelled' },
+    { id:'s8', order_number:'SO-2026-008', customer_name:'Pepsico Egypt',  date:d(22), total:73500,  subtotal:64474,  tax_amount:9026,  status:'delivered' },
+    { id:'s9', order_number:'SO-2026-009', customer_name:'Al-Amal Paper',  date:d(25), total:215000, subtotal:188596, tax_amount:26404, status:'confirmed' },
+    { id:'s10',order_number:'SO-2026-010', customer_name:'CIB Bank',       date:d(30), total:442000, subtotal:387719, tax_amount:54281, status:'delivered' },
+    { id:'s11',order_number:'SO-2025-098', customer_name:'Maersk Egypt',   date:d(45), total:310000, subtotal:271930, tax_amount:38070, status:'delivered' },
+    { id:'s12',order_number:'SO-2025-097', customer_name:'Vodafone Egypt', date:d(60), total:189000, subtotal:165789, tax_amount:23211, status:'delivered' },
+  ];
+  const FALLBACK_PRODS = [
+    { id:'p1', name:'Industrial Pump A-200', sale_price:24500 },
+    { id:'p2', name:'Control Panel Unit',    sale_price:8900  },
+    { id:'p3', name:'Steel Pipe 6m',         sale_price:450   },
+    { id:'p4', name:'Valve Assembly VX',     sale_price:1200  },
+    { id:'p5', name:'Conveyor Belt Set',     sale_price:35000 },
+  ];
+
+  // ── Init ──────────────────────────────────────────────────────────────────
+  if (typeof NexusUtils !== 'undefined') NexusUtils.initSidebar('sales.html');
+  loadSalesData();
+})();
+</script>
+</main>
+</body>
+</html>

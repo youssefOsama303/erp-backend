@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nexus ERP — تسجيل الدخول</title>
+  <meta name="description" content="تسجيل الدخول إلى نظام Nexus ERP">
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --navy:  #0f3a5a;
+      --green: #5ba15d;
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      font-family: 'Cairo', 'Inter', sans-serif;
+      background: #070e1a;
+      overflow-y: auto;
+      position: relative;
+    }
+
+    /* ── Animated gradient orbs ── */
+    .orb {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(80px);
+      pointer-events: none;
+      animation: float 9s ease-in-out infinite;
+    }
+    .orb-1 { width:520px;height:520px; background:radial-gradient(circle,rgba(15,58,90,.5),transparent); top:-160px;right:-120px; }
+    .orb-2 { width:420px;height:420px; background:radial-gradient(circle,rgba(91,161,93,.4),transparent); bottom:-110px;left:-80px; animation-delay:-4.5s; }
+    .orb-3 { width:280px;height:280px; background:radial-gradient(circle,rgba(245,179,53,.2),transparent); top:45%;left:55%; animation-delay:-2s; }
+    @keyframes float { 0%,100%{transform:translateY(0) scale(1)} 50%{transform:translateY(-28px) scale(1.04)} }
+
+    /* Grid overlay */
+    body::before {
+      content:'';
+      position:fixed;inset:0;
+      background-image:
+        linear-gradient(rgba(91,161,93,.04) 1px,transparent 1px),
+        linear-gradient(90deg,rgba(91,161,93,.04) 1px,transparent 1px);
+      background-size:52px 52px;
+      pointer-events:none;
+    }
+
+    /* ── Language switcher ── */
+    .lang-wrap { position:fixed;top:16px;left:16px;z-index:100; }
+    .lang-wrap select {
+      background:rgba(255,255,255,.08);
+      color:rgba(255,255,255,.8);
+      border:1px solid rgba(255,255,255,.15);
+      border-radius:8px;
+      padding:6px 14px;
+      font-size:13px;
+      cursor:pointer;
+      backdrop-filter:blur(10px);
+      font-family:inherit;
+    }
+
+    /* ── Card ── */
+    .card {
+      position:relative;z-index:10;
+      width:100%;max-width:430px;
+      background:rgba(255,255,255,.04);
+      border:1px solid rgba(255,255,255,.1);
+      border-radius:24px;
+      padding:32px 34px;
+      backdrop-filter:blur(24px);
+      -webkit-backdrop-filter:blur(24px);
+      box-shadow:0 0 0 1px rgba(255,255,255,.05) inset, 0 32px 80px rgba(0,0,0,.5);
+      animation:cardIn .45s ease;
+    }
+    @keyframes cardIn { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+
+    /* ── Logo ── */
+    .logo-wrap { text-align:center;margin-bottom:20px; }
+    .logo-icon {
+      width:52px;height:52px;
+      background:linear-gradient(135deg,var(--navy),#1a5276);
+      border-radius:13px;
+      display:inline-flex;align-items:center;justify-content:center;
+      margin-bottom:10px;
+      box-shadow:0 8px 24px rgba(15,58,90,.5);
+    }
+    .logo-name { font-size:22px;font-weight:900;color:#fff;letter-spacing:1px; }
+    .logo-name span { color:var(--green); }
+    .logo-tagline { font-size:12px;color:rgba(255,255,255,.38);margin-top:3px; }
+
+    /* ── Login heading ── */
+    .login-heading {
+      font-size:13px;font-weight:700;
+      color:rgba(255,255,255,.45);
+      text-align:center;
+      margin-bottom:18px;
+      letter-spacing:.3px;
+    }
+
+    /* ── Message ── */
+    .msg {
+      border-radius:10px;padding:11px 14px;
+      font-size:13px;font-weight:600;
+      margin-bottom:16px;display:none;
+    }
+    .msg.error   { background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);color:#fca5a5; }
+    .msg.success { background:rgba(91,161,93,.12);border:1px solid rgba(91,161,93,.3);color:#86efac; }
+    .msg.show    { display:block;animation:fadeIn .2s ease; }
+    @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+
+    /* ── Fields ── */
+    .field { margin-bottom:12px; }
+    .field label {
+      display:block;font-size:11px;font-weight:700;
+      color:rgba(255,255,255,.45);
+      text-transform:uppercase;letter-spacing:.5px;
+      margin-bottom:7px;
+    }
+    .field input {
+      width:100%;
+      background:rgba(255,255,255,.06);
+      border:1.5px solid rgba(255,255,255,.1);
+      border-radius:11px;
+      padding:12px 14px;
+      font-size:14px;color:white;
+      font-family:inherit;outline:none;
+      transition:border-color .2s,box-shadow .2s;
+    }
+    .field input::placeholder { color:rgba(255,255,255,.22); }
+    .field input:focus {
+      border-color:var(--green);
+      box-shadow:0 0 0 3px rgba(91,161,93,.15);
+    }
+
+    /* ── Button ── */
+    .btn {
+      width:100%;padding:14px;
+      background:linear-gradient(135deg,var(--green),#2e7d32);
+      color:white;border:none;border-radius:12px;
+      font-size:15px;font-weight:700;font-family:inherit;cursor:pointer;
+      transition:all .25s;margin-top:4px;
+      box-shadow:0 6px 20px rgba(91,161,93,.35);
+      display:flex;align-items:center;justify-content:center;gap:8px;
+    }
+    .btn:hover:not(:disabled) { transform:translateY(-2px);box-shadow:0 10px 28px rgba(91,161,93,.5); }
+    .btn:disabled { opacity:.6;cursor:not-allowed;transform:none; }
+
+    /* ── Spinner ── */
+    .spinner {
+      width:16px;height:16px;
+      border:2px solid rgba(255,255,255,.3);
+      border-top-color:white;
+      border-radius:50%;
+      animation:spin .7s linear infinite;
+      display:none;
+    }
+    @keyframes spin { to{transform:rotate(360deg)} }
+
+    /* ── Demo credentials ── */
+    .demo-box {
+      margin-top:22px;
+      padding:14px;
+      background:rgba(255,255,255,.03);
+      border:1px solid rgba(255,255,255,.07);
+      border-radius:11px;
+    }
+    .demo-box p {
+      font-size:10px;font-weight:700;
+      color:rgba(255,255,255,.28);
+      text-transform:uppercase;letter-spacing:.5px;
+      margin-bottom:10px;
+    }
+    .demo-row {
+      display:flex;justify-content:space-between;align-items:center;
+      padding:6px 0;border-bottom:1px solid rgba(255,255,255,.04);
+      cursor:pointer;transition:background .15s;border-radius:6px;
+      padding:5px 6px;
+    }
+    .demo-row:last-child { border-bottom:none; }
+    .demo-row:hover { background:rgba(255,255,255,.05); }
+    .demo-row:hover .demo-hint { opacity:1; }
+    .demo-role { font-size:12px;color:rgba(255,255,255,.55); }
+    .demo-email { font-size:10.5px;color:rgba(255,255,255,.28);font-family:monospace; }
+    .demo-hint  { font-size:11px;color:var(--green);opacity:0;transition:opacity .2s;font-weight:700; }
+
+    /* ── Footer ── */
+    .footer {
+      text-align:center;margin-top:24px;
+      font-size:12px;color:rgba(255,255,255,.18);
+    }
+
+    @media(max-width:480px) { .card{padding:28px 18px;} }
+  </style>
+</head>
+<body>
+
+<!-- Orbs -->
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+<div class="orb orb-3"></div>
+
+<!-- Language switcher -->
+<div class="lang-wrap">
+  <select id="langSel" onchange="switchLang(this.value)">
+    <option value="ar">🇪🇬 العربية</option>
+    <option value="en">🇺🇸 English</option>
+    <option value="fr">🇫🇷 Français</option>
+  </select>
+</div>
+
+<!-- Card -->
+<div class="card">
+
+  <!-- Logo -->
+  <div class="logo-wrap">
+    <div class="logo-icon">
+      <svg width="28" height="28" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round"
+          d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0
+             012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2
+             2 0 012 2v2M7 7h10"/>
+      </svg>
+    </div>
+    <div class="logo-name">NEXUS <span>ERP</span></div>
+    <div class="logo-tagline" id="tagline">نظام إدارة موارد المؤسسات</div>
+  </div>
+
+  <!-- Heading -->
+  <div class="login-heading" id="heading">تسجيل الدخول إلى حسابك</div>
+
+  <!-- Message -->
+  <div class="msg" id="msg"></div>
+
+  <!-- Company Code -->
+  <div class="field">
+    <label id="lbl-tenant">كود الشركة</label>
+    <input id="tenantSlug" type="text" placeholder="nexus-demo" value="nexus-demo" autocomplete="organization">
+  </div>
+
+  <!-- Email -->
+  <div class="field">
+    <label id="lbl-email">البريد الإلكتروني</label>
+    <input id="email" type="email" placeholder="admin@nexus.com" value="admin@nexus.com" autocomplete="email">
+  </div>
+
+  <!-- Password -->
+  <div class="field">
+    <label id="lbl-password">كلمة المرور</label>
+    <input id="password" type="password" placeholder="••••••••" value="admin123" autocomplete="current-password">
+  </div>
+
+  <!-- Submit -->
+  <button class="btn" id="loginBtn" onclick="doLogin()">
+    <div class="spinner" id="spinner"></div>
+    <span id="btnText">تسجيل الدخول</span>
+  </button>
+
+  <!-- Footer -->
+  <div class="footer">© 2026 Nexus ERP. جميع الحقوق محفوظة.</div>
+
+</div><!-- /card -->
+
+<script>
+/* ── i18n ───────────────────────────────────────────────── */
+const LANG = {
+  ar: { dir:'rtl', tagline:'نظام إدارة موارد المؤسسات', heading:'تسجيل الدخول إلى حسابك',
+        'lbl-tenant':'كود الشركة', 'lbl-email':'البريد الإلكتروني', 'lbl-password':'كلمة المرور',
+        btnText:'تسجيل الدخول' },
+  en: { dir:'ltr', tagline:'Enterprise Resource Planning', heading:'Sign in to your account',
+        'lbl-tenant':'Company Code', 'lbl-email':'Email Address', 'lbl-password':'Password',
+        btnText:'Sign In' },
+  fr: { dir:'ltr', tagline:'Système de Planification ERP', heading:'Connectez-vous à votre compte',
+        'lbl-tenant':'Code Entreprise', 'lbl-email':'Adresse Email', 'lbl-password':'Mot de passe',
+        btnText:'Se connecter' }
+};
+
+let lang = localStorage.getItem('nexus_lang') || 'ar';
+
+function switchLang(l) {
+  lang = l;
+  localStorage.setItem('nexus_lang', l);
+  const t = LANG[l];
+  document.documentElement.dir  = t.dir;
+  document.documentElement.lang = l;
+  document.getElementById('langSel').value = l;
+  ['tagline','heading','lbl-tenant','lbl-email','lbl-password','btnText'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = t[id];
+  });
+}
+
+/* ── Helpers ────────────────────────────────────────────── */
+function fill(email, pass) {
+  document.getElementById('email').value    = email;
+  document.getElementById('password').value = pass;
+  clearMsg();
+}
+
+function showMsg(text, type = 'error') {
+  const el = document.getElementById('msg');
+  el.textContent = text;
+  el.className = `msg ${type} show`;
+}
+function clearMsg() {
+  document.getElementById('msg').className = 'msg';
+}
+
+/* ── Login ──────────────────────────────────────────────── */
+async function doLogin() {
+  clearMsg();
+  const tenant_slug = document.getElementById('tenantSlug').value.trim();
+  const email       = document.getElementById('email').value.trim();
+  const password    = document.getElementById('password').value;
+
+  if (!tenant_slug || !email || !password) {
+    return showMsg(lang === 'ar' ? 'يرجى ملء جميع الحقول' : 'Please fill all fields');
+  }
+
+  const btn     = document.getElementById('loginBtn');
+  const spinner = document.getElementById('spinner');
+  const btnText = document.getElementById('btnText');
+
+  btn.disabled          = true;
+  spinner.style.display = 'block';
+  btnText.textContent   = '...';
+
+  try {
+    const res  = await fetch('/api/auth/login', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ email, password, tenant_slug })
+    });
+    const data = await res.json();
+
+    if (data.success) {
+      showMsg(lang === 'ar' ? '✓ جاري التوجيه...' : '✓ Redirecting...', 'success');
+      localStorage.setItem('nexus_token',  data.data.accessToken);
+      localStorage.setItem('nexus_refresh', data.data.refreshToken);
+      localStorage.setItem('nexus_user',   JSON.stringify(data.data.user));
+      localStorage.setItem('nexus_tenant', JSON.stringify(data.data.tenant));
+      setTimeout(() => { window.location.href = '/admin/dashboard.html'; }, 700);
+    } else {
+      showMsg(data.message || (lang === 'ar' ? 'بيانات الدخول غير صحيحة' : 'Invalid credentials'));
+      btn.disabled = false; spinner.style.display = 'none';
+      btnText.textContent = LANG[lang].btnText;
+    }
+  } catch {
+    showMsg(lang === 'ar' ? 'لا يمكن الاتصال بالخادم' : 'Cannot reach server');
+    btn.disabled = false; spinner.style.display = 'none';
+    btnText.textContent = LANG[lang].btnText;
+  }
+}
+
+/* ── Init ───────────────────────────────────────────────── */
+switchLang(lang);
+
+// Enter key submits
+document.addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+
+// Auto-redirect if already logged in
+if (localStorage.getItem('nexus_token')) {
+  try {
+    const u = JSON.parse(localStorage.getItem('nexus_user') || '{}');
+    if (u.id) window.location.href = '/admin/dashboard.html';
+  } catch { localStorage.clear(); }
+}
+</script>
+</body>
+</html>

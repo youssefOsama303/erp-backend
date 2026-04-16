@@ -1,0 +1,8 @@
+<svg width="256" height="256" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Nexus Infinity Loop -->
+  <path d="M78 128C78 106 96 88 118 88C130 88 141 93 148 102L178 140C185 149 196 154 208 154C230 154 248 136 248 114C248 92 230 74 208 74C196 74 185 79 178 88L148 126C141 135 130 140 118 140C96 140 78 122 78 100C78 78 96 60 118 60L128 60" stroke="#002D50" stroke-width="20" stroke-linecap="round"/>
+  <!-- Central Symbol: Grid -->
+  <rect x="110" y="110" width="36" height="36" rx="8" fill="#00848E"/>
+  <rect x="140" y="110" width="20" height="20" rx="4" fill="#67B82D"/>
+  <rect x="110" y="140" width="20" height="20" rx="4" fill="#E88300"/>
+</svg>

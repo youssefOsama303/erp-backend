@@ -1,0 +1,20 @@
+<svg width="256" height="256" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M60 128C60 100 85 75 115 75C135 75 152 85 162 100" stroke="#002D50" stroke-width="16" stroke-linecap="round"/>
+  <!-- HR: People -->
+  <circle cx="128" cy="115" r="15" fill="#67B82D" stroke="#002D50" stroke-width="2"/>
+  <path d="M100 150C100 135 115 130 128 130C141 130 156 135 156 150" stroke="#002D50" stroke-width="4" stroke-linecap="round"/>
+</svg>
+<!-- slide -->
+<svg width="256" height="256" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M60 128C60 100 85 75 115 75" stroke="#002D50" stroke-width="16" stroke-linecap="round"/>
+  <!-- BTP: Tech/Cloud -->
+  <path d="M100 140C100 125 115 115 130 115C140 115 150 125 155 135" stroke="#00848E" stroke-width="8" stroke-linecap="round"/>
+  <rect x="110" y="145" width="36" height="10" rx="2" fill="#00848E"/>
+</svg>
+<!-- slide -->
+<svg width="256" height="256" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M60 128C60 100 85 75 115 75" stroke="#002D50" stroke-width="16" stroke-linecap="round"/>
+  <!-- Settings: Gear -->
+  <circle cx="128" cy="128" r="25" stroke="#555" stroke-width="6" stroke-dasharray="8 4"/>
+  <circle cx="128" cy="128" r="8" fill="#555"/>
+</svg>

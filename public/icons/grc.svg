@@ -1,0 +1,14 @@
+<svg width="256" height="256" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M128 90C128 90 158 100 158 125C158 150 128 165 128 165C128 165 98 150 98 125C98 100 128 90 128 90Z" fill="#00848E" stroke="white" stroke-width="8"/>
+  <path d="M115 125L125 135L145 115" stroke="white" stroke-width="12" stroke-linecap="round"/>
+</svg>
+<!-- slide -->
+<svg width="256" height="256" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M100 100L156 156M156 100L100 156" stroke="white" stroke-width="16" stroke-linecap="round"/>
+  <circle cx="128" cy="128" r="40" stroke="white" stroke-width="8" stroke-dasharray="12 6"/>
+</svg>
+<!-- slide -->
+<svg width="256" height="256" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="128" cy="128" r="45" stroke="white" stroke-width="12" stroke-dasharray="10 10"/>
+  <circle cx="128" cy="128" r="15" fill="white"/>
+</svg>

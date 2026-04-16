@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<title>Nexus ERP — Financial Accounting (FI/CO)</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+</head>
+<body>
+<main style="padding:28px 32px; font-family:'Inter',sans-serif;">
+
+<style>
+.fi-card { background:white; border-radius:14px; box-shadow:0 2px 10px rgba(0,0,0,.06); padding:20px; }
+.fi-btn  { border:none; border-radius:10px; padding:8px 18px; font-size:13px; font-weight:600; cursor:pointer; transition:all 0.2s; }
+.fi-kpi-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:16px; margin-bottom:24px; }
+.fi-kpi-card { border-radius:14px; padding:20px; color:white; }
+.fi-progress-bar { height:8px; background:#e2e8f0; border-radius:4px; overflow:hidden; margin-top:6px; }
+.fi-progress-fill { height:100%; border-radius:4px; transition:width 0.8s ease; }
+.fi-main-grid { display:grid; grid-template-columns:1fr 340px; gap:20px; align-items:start; }
+.fi-row { display:flex; justify-content:space-between; align-items:center; padding:10px 14px; background:#f8fafc; border-radius:8px; font-size:13px; font-weight:600; color:#0f3a5a; margin-bottom:6px; }
+.fi-row-sub { display:flex; justify-content:space-between; align-items:center; padding:8px 14px 8px 28px; font-size:12px; color:#475569; border-left:2px solid #e2e8f0; margin:2px 0 2px 14px; }
+.fi-account-type { display:inline-block; padding:2px 8px; border-radius:6px; font-size:10px; font-weight:700; text-transform:uppercase; }
+.type-asset    { background:#dbeafe; color:#1e40af; }
+.type-liability{ background:#fee2e2; color:#b91c1c; }
+.type-equity   { background:#f0fdf4; color:#15803d; }
+.type-revenue  { background:#dcfce7; color:#15803d; }
+.type-expense  { background:#fff7ed; color:#c2410c; }
+@media(max-width:768px) { .fi-main-grid{grid-template-columns:1fr;} .fi-kpi-grid{grid-template-columns:1fr 1fr;} }
+.loading-pulse { animation: pulse 1.5s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+</style>
+
+<!-- Page Header -->
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:28px;flex-wrap:wrap;gap:12px;">
+  <div>
+    <h1 style="font-size:22px;font-weight:900;color:#0f3a5a;margin:0;">💰 Financial Accounting & Controlling (FI/CO)</h1>
+    <p style="font-size:13px;color:#64748b;margin-top:4px;">General Ledger, Chart of Accounts & Financial KPIs</p>
+  </div>
+  <div style="display:flex;gap:10px;flex-wrap:wrap;">
+    <button class="fi-btn" style="background:#0f3a5a;color:white;opacity:0.6;cursor:not-allowed;" disabled title="Coming soon">+ Journal Entry</button>
+    <button class="fi-btn" style="background:#f1f5f9;color:#0f3a5a;border:1.5px solid #e2e8f0;" onclick="loadFinancials()">↺ Refresh</button>
+  </div>
+</div>
+
+<!-- KPI Strip -->
+<div class="fi-kpi-grid">
+  <div class="fi-kpi-card" style="background:linear-gradient(135deg,#0f3a5a,#1a5276);">
+    <p style="font-size:11px;opacity:0.7;margin:0 0 6px;font-weight:600;">Net Cash Position</p>
+    <p id="kpi-cash" style="font-size:26px;font-weight:900;margin:0;" class="loading-pulse">—</p>
+    <p style="font-size:11px;opacity:0.6;margin:4px 0 0;">EGP</p>
+  </div>
+  <div class="fi-kpi-card" style="background:linear-gradient(135deg,#5ba15d,#2e7d32);">
+    <p style="font-size:11px;opacity:0.7;margin:0 0 6px;font-weight:600;">Total Receivables (AR)</p>
+    <p id="kpi-ar" style="font-size:26px;font-weight:900;margin:0;" class="loading-pulse">—</p>
+    <p style="font-size:11px;opacity:0.6;margin:4px 0 0;">EGP</p>
+  </div>
+  <div class="fi-kpi-card" style="background:linear-gradient(135deg,#ef4444,#b91c1c);">
+    <p style="font-size:11px;opacity:0.7;margin:0 0 6px;font-weight:600;">Accounts Payable (AP)</p>
+    <p id="kpi-ap" style="font-size:26px;font-weight:900;margin:0;" class="loading-pulse">—</p>
+    <p style="font-size:11px;opacity:0.6;margin:4px 0 0;">EGP</p>
+  </div>
+  <div class="fi-kpi-card" style="background:linear-gradient(135deg,#f5b335,#e0a028);color:#1e293b;">
+    <p style="font-size:11px;opacity:0.7;margin:0 0 6px;font-weight:600;">Net Profit (YTD)</p>
+    <p id="kpi-profit" style="font-size:26px;font-weight:900;margin:0;" class="loading-pulse">—</p>
+    <p style="font-size:11px;opacity:0.6;margin:4px 0 0;">EGP</p>
+  </div>
+</div>
+
+<!-- Main Grid -->
+<div class="fi-main-grid">
+
+  <!-- Chart of Accounts -->
+  <div class="fi-card">
+    <h2 style="font-size:15px;font-weight:700;color:#0f3a5a;margin:0 0 16px;">📋 Chart of Accounts</h2>
+    <div id="accountsTable">
+      <div style="text-align:center;padding:32px;color:#94a3b8;" class="loading-pulse">Loading accounts…</div>
+    </div>
+  </div>
+
+  <!-- Right Panel -->
+  <div>
+    <!-- Revenue vs Expenses -->
+    <div class="fi-card" style="margin-bottom:20px;">
+      <h2 style="font-size:15px;font-weight:700;color:#0f3a5a;margin:0 0 16px;">📊 Budget Utilization</h2>
+      <div id="budgetBars" style="display:flex;flex-direction:column;gap:16px;">
+        <div style="color:#94a3b8;font-size:13px;" class="loading-pulse">Loading…</div>
+      </div>
+    </div>
+
+    <!-- Recent Entries -->
+    <div class="fi-card">
+      <h3 style="font-size:13px;font-weight:700;color:#0f3a5a;margin:0 0 12px;">🗒️ Account Summary</h3>
+      <div id="accountSummary" style="font-size:12px;display:flex;flex-direction:column;gap:8px;">
+        <div style="color:#94a3b8;" class="loading-pulse">Loading…</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script src="/js/api.js"></script>
+<script src="/js/utils.js"></script>
+<script>
+(function() {
+
+  function fmt(n) {
+    const num = parseFloat(n) || 0;
+    if (Math.abs(num) >= 1000000) return (num/1000000).toFixed(1) + 'M';
+    if (Math.abs(num) >= 1000)    return (num/1000).toFixed(0) + 'K';
+    return num.toLocaleString();
+  }
+
+  const TYPE_CLASS = {
+    Asset:'type-asset', Liability:'type-liability',
+    Equity:'type-equity', Revenue:'type-revenue', Expense:'type-expense'
+  };
+
+  async function loadFinancials() {
+    try {
+      // 1. KPIs from /summary
+      const sum = await NexusAPI.get('/accounting/summary');
+      if (sum && sum.success) {
+        const d = sum.data;
+        document.getElementById('kpi-cash').textContent   = fmt(d.cash_position);
+        document.getElementById('kpi-ar').textContent     = fmt(d.receivables);
+        document.getElementById('kpi-ap').textContent     = fmt(d.payables);
+        const profit = d.net_profit;
+        const profEl = document.getElementById('kpi-profit');
+        profEl.textContent = (profit >= 0 ? '+' : '') + fmt(profit);
+        profEl.style.color = profit >= 0 ? '#d1fae5' : '#fecaca';
+
+        // Budget bars
+        const revenue  = parseFloat(d.total_revenue)  || 1;
+        const expenses = parseFloat(d.total_expenses) || 0;
+        const margin = ((revenue - expenses) / revenue * 100).toFixed(1);
+        const expPct = Math.min(Math.round(expenses / revenue * 100), 100);
+        document.getElementById('budgetBars').innerHTML = `
+          <div>
+            <div style="display:flex;justify-content:space-between;font-size:12px;font-weight:600;margin-bottom:4px;">
+              <span>Revenue</span><span style="color:#5ba15d;">${fmt(revenue)} EGP</span>
+            </div>
+            <div class="fi-progress-bar"><div class="fi-progress-fill" style="width:100%;background:#5ba15d;"></div></div>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;font-size:12px;font-weight:600;margin-bottom:4px;">
+              <span>Expenses</span><span style="color:#ef4444;">${fmt(expenses)} EGP</span>
+            </div>
+            <div class="fi-progress-bar"><div class="fi-progress-fill" style="width:${expPct}%;background:#ef4444;"></div></div>
+          </div>
+          <div style="margin-top:8px;padding:10px;background:#f0fdf4;border-radius:8px;border:1px solid #bbf7d0;">
+            <div style="display:flex;justify-content:space-between;font-size:12px;font-weight:700;">
+              <span style="color:#15803d;">Net Profit Margin</span>
+              <span style="color:#15803d;">${margin}%</span>
+            </div>
+          </div>
+        `;
+
+        // Summary panel
+        document.getElementById('accountSummary').innerHTML = [
+          { label:'Total Revenue',   val: fmt(d.total_revenue),  col:'#5ba15d' },
+          { label:'Total Expenses',  val: fmt(d.total_expenses), col:'#ef4444' },
+          { label:'Net Profit',      val: fmt(d.net_profit),     col: d.net_profit >= 0 ? '#0f3a5a' : '#ef4444' },
+          { label:'Total Assets',    val: fmt(d.total_assets),   col:'#1e40af' },
+        ].map(r => `
+          <div style="display:flex;justify-content:space-between;color:#475569;padding:6px 0;border-bottom:1px solid #f1f5f9;">
+            <span>${r.label}</span>
+            <span style="font-weight:700;color:${r.col};">${r.val}</span>
+          </div>
+        `).join('');
+      }
+
+      // 2. Chart of Accounts table
+      const acc = await NexusAPI.get('/accounting');
+      const tbody = document.getElementById('accountsTable');
+      if (acc && acc.success && acc.data.length) {
+        tbody.innerHTML = `
+          <table style="width:100%;border-collapse:collapse;">
+            <thead>
+              <tr>
+                <th style="font-size:11px;color:#94a3b8;font-weight:600;text-align:left;padding:6px 8px;border-bottom:1px solid #f1f5f9;">Code</th>
+                <th style="font-size:11px;color:#94a3b8;font-weight:600;text-align:left;padding:6px 8px;border-bottom:1px solid #f1f5f9;">Account Name</th>
+                <th style="font-size:11px;color:#94a3b8;font-weight:600;text-align:left;padding:6px 8px;border-bottom:1px solid #f1f5f9;">Type</th>
+                <th style="font-size:11px;color:#94a3b8;font-weight:600;text-align:right;padding:6px 8px;border-bottom:1px solid #f1f5f9;">Balance (EGP)</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${acc.data.map(a => `
+                <tr style="border-bottom:1px solid #f8fafc;">
+                  <td style="padding:9px 8px;font-family:monospace;font-weight:700;color:#64748b;">${a.code}</td>
+                  <td style="padding:9px 8px;font-weight:600;color:#0f3a5a;">${a.name}</td>
+                  <td style="padding:9px 8px;"><span class="fi-account-type ${TYPE_CLASS[a.type]||''}">${a.type}</span></td>
+                  <td style="padding:9px 8px;text-align:right;font-weight:700;color:${a.nature==='credit'?'#5ba15d':'#0f3a5a'};">
+                    ${parseFloat(a.balance||0).toLocaleString()}
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>`;
+      } else {
+        tbody.innerHTML = '<div style="color:#94a3b8;font-size:13px;padding:20px;text-align:center;">No accounts found.</div>';
+      }
+
+    } catch(e) {
+      console.error('[FI/CO] Load error:', e);
+      ['kpi-cash','kpi-ar','kpi-ap','kpi-profit'].forEach(id => {
+        const el = document.getElementById(id);
+        if(el) el.textContent = 'ERR';
+      });
+    } finally {
+      document.querySelectorAll('.loading-pulse').forEach(el => el.classList.remove('loading-pulse'));
+    }
+  }
+
+  if (typeof NexusUtils !== 'undefined') NexusUtils.initSidebar('accounting');
+  loadFinancials();
+  window.loadFinancials = loadFinancials;
+})();
+</script>
+</main>
+</body>
+</html>

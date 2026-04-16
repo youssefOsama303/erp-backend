@@ -1,0 +1,13 @@
+<svg width="256" height="256" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M60 128C60 100 85 75 115 75C135 75 152 85 162 100" stroke="white" stroke-width="16" stroke-linecap="round"/>
+  <path d="M100 110L128 95L156 110V140L128 155L100 140V110Z" fill="#E88300" stroke="white" stroke-width="4"/>
+</svg>
+<!-- slide -->
+<svg width="256" height="256" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="128" cy="128" r="35" fill="#FFB800" stroke="white" stroke-width="4"/>
+  <text x="120" y="140" fill="white" font-family="Arial" font-weight="bold" font-size="30">$</text>
+</svg>
+<!-- slide -->
+<svg width="256" height="256" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M128 90C128 90 158 100 158 125C158 150 128 165 128 165C128 165 98 150 98 125C98 100 128 90 128 90Z" fill="#00848E" stroke="white" stroke-width="4"/>
+</svg>

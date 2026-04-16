@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 64" role="img" aria-label="Nexus Erp System logo">
+  <defs>
+    <linearGradient id="nexusGrad" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#2563eb"/>
+      <stop offset="100%" stop-color="#0ea5e9"/>
+    </linearGradient>
+  </defs>
+  <rect x="4" y="6" width="120" height="52" rx="18" fill="#0b1220"/>
+  <path d="M22 45V19h8l16 17V19h8v26h-8L30 28v17z" fill="url(#nexusGrad)"/>
+  <path d="M65 45V19h24v7H73v3h14v7H73v2h16v7z" fill="#e2e8f0"/>
+  <path d="M93 45l10-13-10-13h10l5 7 5-7h10l-10 13 10 13h-10l-5-7-5 7z" fill="#38bdf8"/>
+</svg>

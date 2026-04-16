@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<title>Nexus ERP — System Settings</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+</head>
+<body>
+<main style="padding:28px 32px; font-family:'Inter',sans-serif;">
+<style>
+.cfg-card { background:white; border-radius:14px; box-shadow:0 2px 10px rgba(0,0,0,.06); padding:24px; margin-bottom:20px; }
+.cfg-label { font-size:11px; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:.5px; display:block; margin-bottom:5px; }
+.cfg-input { width:100%; border:1.5px solid #e2e8f0; border-radius:8px; padding:9px 12px; font-size:13px; font-family:'Inter',sans-serif; outline:none; box-sizing:border-box; transition:border-color .2s; }
+.cfg-input:focus { border-color:#5ba15d; }
+.cfg-input:disabled { background:#f8fafc; color:#94a3b8; }
+.cfg-grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.cfg-grid-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:20px; }
+@media(max-width:768px){ .cfg-grid-2,.cfg-grid-3{grid-template-columns:1fr;} }
+/* Toggle switch */
+.toggle-wrap { display:flex; align-items:center; justify-content:space-between; padding:12px 0; border-bottom:1px solid #f1f5f9; }
+.toggle-wrap:last-child { border-bottom:none; }
+.toggle { position:relative; display:inline-block; width:40px; height:22px; flex-shrink:0; }
+.toggle input { opacity:0; width:0; height:0; }
+.slider { position:absolute; cursor:pointer; inset:0; background:#cbd5e1; transition:.3s; border-radius:34px; }
+.slider:before { position:absolute; content:""; height:16px; width:16px; left:3px; bottom:3px; background:white; transition:.3s; border-radius:50%; }
+input:checked + .slider { background:#5ba15d; }
+input:checked + .slider:before { transform:translateX(18px); }
+/* Module toggles */
+.mod-card { border:1.5px solid #e2e8f0; border-radius:10px; padding:14px; display:flex; justify-content:space-between; align-items:center; transition:border-color .2s; }
+.mod-card:hover { border-color:#5ba15d; }
+.mod-icon { font-size:20px; margin-right:10px; }
+.save-btn { background:linear-gradient(135deg,#0f3a5a,#1a5276); color:white; border:none; border-radius:10px; padding:10px 24px; font-size:14px; font-weight:700; cursor:pointer; transition:all .2s; }
+.save-btn:hover { background:#1a5276; transform:translateY(-1px); }
+.save-btn:disabled { opacity:.6; cursor:not-allowed; transform:none; }
+</style>
+
+<!-- Header -->
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:28px;flex-wrap:wrap;gap:12px;">
+  <div>
+    <h1 style="font-size:22px;font-weight:900;color:#0f3a5a;margin:0;">⚙️ System Settings</h1>
+    <p style="font-size:13px;color:#64748b;margin-top:4px;">Tenant configuration, security policies &amp; module management</p>
+  </div>
+  <button class="save-btn" id="saveBtn" onclick="saveSettings()">Save Changes</button>
+</div>
+
+<!-- Tenant Profile -->
+<div class="cfg-card">
+  <h2 style="font-size:15px;font-weight:700;color:#0f3a5a;margin:0 0 18px;">🏢 Tenant Profile</h2>
+  <div class="cfg-grid-2">
+    <div>
+      <label class="cfg-label">Organization Name</label>
+      <input class="cfg-input" id="s-orgname" type="text" placeholder="Loading...">
+    </div>
+    <div>
+      <label class="cfg-label">Tenant Slug (read-only)</label>
+      <input class="cfg-input" id="s-slug" type="text" disabled>
+    </div>
+    <div>
+      <label class="cfg-label">Default Currency</label>
+      <select class="cfg-input" id="s-currency">
+        <option value="EGP">EGP — Egyptian Pound</option>
+        <option value="USD">USD — US Dollar</option>
+        <option value="SAR">SAR — Saudi Riyal</option>
+        <option value="AED">AED — UAE Dirham</option>
+      </select>
+    </div>
+    <div>
+      <label class="cfg-label">Default Language</label>
+      <select class="cfg-input" id="s-lang">
+        <option value="en" selected>English</option>
+        <option value="ar">العربية</option>
+      </select>
+    </div>
+    <div>
+      <label class="cfg-label">Admin Display Name</label>
+      <input class="cfg-input" id="s-adminname" type="text" value="Youssef Osama Badawy">
+    </div>
+    <div>
+      <label class="cfg-label">Support Email</label>
+      <input class="cfg-input" id="s-email" type="email" placeholder="admin@nexus.com">
+    </div>
+  </div>
+</div>
+
+<!-- Module Activation -->
+<div class="cfg-card">
+  <h2 style="font-size:15px;font-weight:700;color:#0f3a5a;margin:0 0 18px;">🧩 Module Activation</h2>
+  <div class="cfg-grid-3">
+    <div class="mod-card">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span class="mod-icon">🛡️</span>
+        <div>
+          <p style="font-size:13px;font-weight:700;margin:0;">GRC</p>
+          <p style="font-size:11px;color:#94a3b8;margin:0;">Governance, Risk &amp; Compliance</p>
+        </div>
+      </div>
+      <label class="toggle"><input type="checkbox" id="mod-grc" checked><span class="slider"></span></label>
+    </div>
+    <div class="mod-card">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span class="mod-icon">☁️</span>
+        <div>
+          <p style="font-size:13px;font-weight:700;margin:0;">BTP</p>
+          <p style="font-size:11px;color:#94a3b8;margin:0;">SAP Business Technology Platform</p>
+        </div>
+      </div>
+      <label class="toggle"><input type="checkbox" id="mod-btp" checked><span class="slider"></span></label>
+    </div>
+    <div class="mod-card" style="opacity:.6;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span class="mod-icon">📊</span>
+        <div>
+          <p style="font-size:13px;font-weight:700;margin:0;">SAC</p>
+          <p style="font-size:11px;color:#94a3b8;margin:0;">SAP Analytics Cloud</p>
+        </div>
+      </div>
+      <label class="toggle"><input type="checkbox" id="mod-sac"><span class="slider"></span></label>
+    </div>
+    <div class="mod-card">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span class="mod-icon">📦</span>
+        <div>
+          <p style="font-size:13px;font-weight:700;margin:0;">EWM</p>
+          <p style="font-size:11px;color:#94a3b8;margin:0;">Extended Warehouse Management</p>
+        </div>
+      </div>
+      <label class="toggle"><input type="checkbox" id="mod-ewm" checked><span class="slider"></span></label>
+    </div>
+    <div class="mod-card">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span class="mod-icon">💰</span>
+        <div>
+          <p style="font-size:13px;font-weight:700;margin:0;">FI/CO</p>
+          <p style="font-size:11px;color:#94a3b8;margin:0;">Financial Accounting</p>
+        </div>
+      </div>
+      <label class="toggle"><input type="checkbox" id="mod-fico" checked><span class="slider"></span></label>
+    </div>
+    <div class="mod-card" style="opacity:.6;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span class="mod-icon">🛒</span>
+        <div>
+          <p style="font-size:13px;font-weight:700;margin:0;">Taulia</p>
+          <p style="font-size:11px;color:#94a3b8;margin:0;">SAP Business Network</p>
+        </div>
+      </div>
+      <label class="toggle"><input type="checkbox" id="mod-taulia"><span class="slider"></span></label>
+    </div>
+  </div>
+</div>
+
+<!-- Security & Access -->
+<div class="cfg-card">
+  <h2 style="font-size:15px;font-weight:700;color:#0f3a5a;margin:0 0 18px;">🔒 Security &amp; Access Control</h2>
+  <div class="toggle-wrap">
+    <div>
+      <p style="font-size:13px;font-weight:600;margin:0;">Multi-Factor Authentication (MFA)</p>
+      <p style="font-size:12px;color:#94a3b8;margin:2px 0 0;">Require MFA for all admin accounts</p>
+    </div>
+    <label class="toggle"><input type="checkbox" id="sec-mfa" checked><span class="slider"></span></label>
+  </div>
+  <div class="toggle-wrap">
+    <div>
+      <p style="font-size:13px;font-weight:600;margin:0;">Single Sign-On (SSO) via Azure AD</p>
+      <p style="font-size:12px;color:#94a3b8;margin:2px 0 0;">Enable enterprise SSO integration</p>
+    </div>
+    <label class="toggle"><input type="checkbox" id="sec-sso"><span class="slider"></span></label>
+  </div>
+  <div class="toggle-wrap">
+    <div>
+      <p style="font-size:13px;font-weight:600;margin:0;">Audit Log Encryption</p>
+      <p style="font-size:12px;color:#94a3b8;margin:2px 0 0;">Encrypt sensitive audit trail data</p>
+    </div>
+    <label class="toggle"><input type="checkbox" id="sec-enc" checked><span class="slider"></span></label>
+  </div>
+  <div class="toggle-wrap">
+    <div>
+      <p style="font-size:13px;font-weight:600;margin:0;">Rate Limiting</p>
+      <p style="font-size:12px;color:#94a3b8;margin:2px 0 0;">Limit API calls per IP (100 req/15min)</p>
+    </div>
+    <label class="toggle"><input type="checkbox" id="sec-rate" checked><span class="slider"></span></label>
+  </div>
+</div>
+
+<!-- ── White-Label / Branding ── -->
+<div class="cfg-card" style="border:1.5px solid #e2e8f0;margin-bottom:20px;">
+  <h2 style="font-size:15px;font-weight:700;color:#0f3a5a;margin:0 0 6px;">🎨 White-Label & Branding</h2>
+  <p style="font-size:12px;color:#94a3b8;margin:0 0 18px;">خصّص اسم النظام وألوانه ليناسب هوية شركتك</p>
+
+  <div class="cfg-grid-2" style="margin-bottom:16px;">
+    <div>
+      <label class="cfg-label">System Name (اسم النظام)</label>
+      <input class="cfg-input" id="wl-name" type="text" placeholder="Nexus ERP" value="">
+    </div>
+    <div>
+      <label class="cfg-label">Company Tagline</label>
+      <input class="cfg-input" id="wl-tagline" type="text" placeholder="شركتك للحلول المتكاملة">
+    </div>
+    <div>
+      <label class="cfg-label">Primary Color (اللون الرئيسي)</label>
+      <div style="display:flex;gap:10px;align-items:center;">
+        <input type="color" id="wl-color" value="#0f3a5a"
+          style="width:48px;height:38px;border:1.5px solid #e2e8f0;border-radius:8px;padding:2px;cursor:pointer;">
+        <input class="cfg-input" id="wl-color-hex" type="text" value="#0f3a5a" placeholder="#0f3a5a"
+          style="flex:1;" oninput="syncColorPicker(this.value)">
+      </div>
+    </div>
+    <div>
+      <label class="cfg-label">Accent Color (لون التمييز)</label>
+      <div style="display:flex;gap:10px;align-items:center;">
+        <input type="color" id="wl-accent" value="#5ba15d"
+          style="width:48px;height:38px;border:1.5px solid #e2e8f0;border-radius:8px;padding:2px;cursor:pointer;">
+        <input class="cfg-input" id="wl-accent-hex" type="text" value="#5ba15d" placeholder="#5ba15d"
+          style="flex:1;" oninput="syncAccentPicker(this.value)">
+      </div>
+    </div>
+  </div>
+
+  <!-- Live Preview -->
+  <div style="background:#f8fafc;border:1.5px dashed #cbd5e1;border-radius:12px;padding:20px;margin-top:8px;">
+    <p style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;margin:0 0 12px;">معاينة فورية</p>
+    <div id="wl-preview" style="display:flex;align-items:center;gap:14px;">
+      <div id="wl-preview-logo"
+        style="width:42px;height:42px;border-radius:10px;background:#0f3a5a;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:900;color:white;">N</div>
+      <div>
+        <div id="wl-preview-name" style="font-size:16px;font-weight:900;color:#0f3a5a;">Nexus ERP</div>
+        <div id="wl-preview-tag" style="font-size:12px;color:#94a3b8;">Enterprise Resource Planning</div>
+      </div>
+      <div style="margin-right:auto;">
+        <span id="wl-preview-btn"
+          style="display:inline-block;padding:7px 18px;border-radius:8px;background:#5ba15d;color:white;font-size:12px;font-weight:700;">
+          دخول النظام
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top:14px;display:flex;gap:10px;">
+    <button onclick="applyBranding()"
+      style="background:linear-gradient(135deg,#0f3a5a,#1a5276);color:white;border:none;border-radius:8px;padding:9px 20px;font-size:13px;font-weight:700;cursor:pointer;">
+      Apply Branding
+    </button>
+    <button onclick="resetBranding()"
+      style="background:#f1f5f9;color:#64748b;border:1.5px solid #e2e8f0;border-radius:8px;padding:9px 20px;font-size:13px;font-weight:600;cursor:pointer;">
+      Reset to Default
+    </button>
+  </div>
+</div>
+
+<!-- ── System Monitoring Card ── -->
+
+<div class="cfg-card" id="monitorCard" style="border:1.5px solid #e2e8f0;">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;flex-wrap:wrap;gap:12px;">
+    <div>
+      <h2 style="font-size:15px;font-weight:700;color:#0f3a5a;margin:0;">📡 System Monitoring</h2>
+      <p style="font-size:12px;color:#94a3b8;margin:3px 0 0;">Live backend health — auto-refresh every 30s</p>
+    </div>
+    <!-- ── Main CTA button ── -->
+    <a href="/admin/health.html" target="_blank" rel="noopener"
+       style="display:inline-flex;align-items:center;gap:8px;
+              background:linear-gradient(135deg,#0f3a5a,#1b7c83);
+              color:white;border:none;border-radius:10px;
+              padding:10px 20px;font-size:13px;font-weight:700;
+              text-decoration:none;cursor:pointer;
+              box-shadow:0 4px 14px rgba(27,124,131,.35);
+              transition:all .2s;"
+       onmouseover="this.style.transform='translateY(-1px)';this.style.boxShadow='0 6px 20px rgba(27,124,131,.45)'"
+       onmouseout="this.style.transform='';this.style.boxShadow='0 4px 14px rgba(27,124,131,.35)'"
+       id="openHealthBtn">
+      🩺 Open Health Monitor ↗
+    </a>
+  </div>
+
+  <!-- ── Mini live status row ── -->
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;" id="miniHealthGrid">
+
+    <!-- Overall -->
+    <div style="background:#f8fafc;border-radius:10px;padding:12px 14px;display:flex;align-items:center;gap:10px;">
+      <span id="mh-dot" style="width:11px;height:11px;border-radius:50%;background:#d1d5db;flex-shrink:0;display:inline-block;"></span>
+      <div>
+        <div style="font-size:10px;color:#94a3b8;font-weight:700;text-transform:uppercase;">API Status</div>
+        <div style="font-size:13px;font-weight:800;color:#0f3a5a;" id="mh-status">Checking…</div>
+      </div>
+    </div>
+
+    <!-- DB -->
+    <div style="background:#f8fafc;border-radius:10px;padding:12px 14px;">
+      <div style="font-size:10px;color:#94a3b8;font-weight:700;text-transform:uppercase;margin-bottom:4px;">Database</div>
+      <div style="font-size:13px;font-weight:700;color:#0f3a5a;" id="mh-db">—</div>
+    </div>
+
+    <!-- Latency -->
+    <div style="background:#f8fafc;border-radius:10px;padding:12px 14px;">
+      <div style="font-size:10px;color:#94a3b8;font-weight:700;text-transform:uppercase;margin-bottom:4px;">DB Latency</div>
+      <div style="font-size:13px;font-weight:700;color:#0f3a5a;" id="mh-latency">—</div>
+    </div>
+
+    <!-- Uptime -->
+    <div style="background:#f8fafc;border-radius:10px;padding:12px 14px;">
+      <div style="font-size:10px;color:#94a3b8;font-weight:700;text-transform:uppercase;margin-bottom:4px;">Uptime</div>
+      <div style="font-size:13px;font-weight:700;color:#0f3a5a;" id="mh-uptime">—</div>
+    </div>
+
+    <!-- Version -->
+    <div style="background:#f8fafc;border-radius:10px;padding:12px 14px;">
+      <div style="font-size:10px;color:#94a3b8;font-weight:700;text-transform:uppercase;margin-bottom:4px;">Version</div>
+      <div style="font-size:13px;font-weight:700;color:#0f3a5a;" id="mh-version">—</div>
+    </div>
+
+    <!-- Memory -->
+    <div style="background:#f8fafc;border-radius:10px;padding:12px 14px;">
+      <div style="font-size:10px;color:#94a3b8;font-weight:700;text-transform:uppercase;margin-bottom:4px;">Memory Used</div>
+      <div style="font-size:13px;font-weight:700;color:#0f3a5a;" id="mh-mem">—</div>
+    </div>
+
+  </div>
+
+  <!-- last checked -->
+  <div style="margin-top:12px;font-size:11px;color:#cbd5e1;display:flex;justify-content:space-between;align-items:center;">
+    <span id="mh-lastcheck">Not checked yet</span>
+    <button onclick="miniHealthCheck()" style="background:none;border:1px solid #e2e8f0;border-radius:6px;padding:3px 10px;font-size:11px;color:#64748b;cursor:pointer;font-family:'Inter',sans-serif;">↺ Refresh</button>
+  </div>
+</div>
+
+<!-- ── Status card ── -->
+<div id="save-status" style="display:none;padding:12px 16px;border-radius:10px;font-size:13px;font-weight:600;margin-top:4px;"></div>
+
+
+<script>
+(function() {
+  // Load current user info to pre-fill fields
+  async function loadSettings() {
+    try {
+      const user = JSON.parse(localStorage.getItem('nexus_user') || '{}');
+      const tenant = JSON.parse(localStorage.getItem('nexus_tenant') || '{}');
+      if (user.name)  document.getElementById('s-adminname').value = user.name;
+      if (user.email) document.getElementById('s-email').value = user.email;
+      if (tenant.name) document.getElementById('s-orgname').value = tenant.name;
+      if (tenant.slug) document.getElementById('s-slug').value = tenant.slug;
+    } catch(_) {}
+  }
+  // ── Mini Health Check ───────────────────────────────────────────────
+  function parseUptime(raw) {
+    if (!raw) return '—';
+    const s = parseInt(raw);
+    if (isNaN(s)) return raw;
+    const d = Math.floor(s / 86400), h = Math.floor((s % 86400) / 3600),
+          m = Math.floor((s % 3600) / 60), sec = s % 60;
+    let o = '';
+    if (d) o += d + 'd '; if (h) o += h + 'h '; if (m) o += m + 'm ';
+    return (o + sec + 's') || '0s';
+  }
+
+  window.miniHealthCheck = async function () {
+    try {
+      const t0  = Date.now();
+      const res = await fetch('/health', { cache: 'no-store' });
+      const d   = await res.json();
+      const ok  = res.ok && d.status === 'ok';
+      const rtt = Date.now() - t0;
+
+      // Dot
+      const dot = document.getElementById('mh-dot');
+      if (dot) {
+        dot.style.background  = ok ? '#22c55e' : '#ef4444';
+        dot.style.boxShadow   = ok ? '0 0 0 3px rgba(34,197,94,.25)' : 'none';
+      }
+
+      // Metrics
+      const set = (id, val, color) => {
+        const el = document.getElementById(id);
+        if (el) { el.textContent = val; if (color) el.style.color = color; }
+      };
+
+      set('mh-status',  ok ? 'OPERATIONAL' : 'DEGRADED',
+          ok ? '#16a34a' : '#dc2626');
+      set('mh-db',      d.database === 'connected' ? '✓ connected' : d.database || '—',
+          d.database === 'connected' ? '#16a34a' : '#dc2626');
+      set('mh-latency', d.dbLatency || `~${rtt}ms`);
+      set('mh-uptime',  parseUptime(d.uptime));
+      set('mh-version', d.version || '—');
+      set('mh-mem',     d.memory?.used || '—');
+
+      // Card border color
+      const card = document.getElementById('monitorCard');
+      if (card) card.style.borderColor = ok ? '#86efac' : '#fca5a5';
+
+      const ts = new Date().toLocaleTimeString('en-GB', { hour12: false });
+      const lc = document.getElementById('mh-lastcheck');
+      if (lc) lc.textContent = `Last checked: ${ts}`;
+
+    } catch (err) {
+      const dot = document.getElementById('mh-dot');
+      if (dot) { dot.style.background = '#ef4444'; dot.style.boxShadow = 'none'; }
+      const st = document.getElementById('mh-status');
+      if (st)  { st.textContent = 'OFFLINE'; st.style.color = '#dc2626'; }
+      const lc = document.getElementById('mh-lastcheck');
+      if (lc)  lc.textContent = 'Error: ' + err.message;
+    }
+  };
+
+  // Run once on load + every 30s
+  miniHealthCheck();
+  setInterval(miniHealthCheck, 30000);
+  loadSettings();
+
+  // ── White-Label / Branding ────────────────────────────────────────────────
+  function updatePreview() {
+    const name   = document.getElementById('wl-name').value   || 'Nexus ERP';
+    const tag    = document.getElementById('wl-tagline').value || 'Enterprise Resource Planning';
+    const color  = document.getElementById('wl-color').value;
+    const accent = document.getElementById('wl-accent').value;
+    const letter = name.trim()[0]?.toUpperCase() || 'N';
+
+    document.getElementById('wl-preview-logo').style.background = color;
+    document.getElementById('wl-preview-logo').textContent      = letter;
+    document.getElementById('wl-preview-name').style.color      = color;
+    document.getElementById('wl-preview-name').textContent      = name;
+    document.getElementById('wl-preview-tag').textContent       = tag;
+    document.getElementById('wl-preview-btn').style.background  = accent;
+  }
+
+  window.syncColorPicker = function(hex) {
+    if (/^#[0-9A-Fa-f]{6}$/.test(hex)) {
+      document.getElementById('wl-color').value = hex;
+      updatePreview();
+    }
+  };
+  window.syncAccentPicker = function(hex) {
+    if (/^#[0-9A-Fa-f]{6}$/.test(hex)) {
+      document.getElementById('wl-accent').value = hex;
+      updatePreview();
+    }
+  };
+
+  // Sync hex inputs when color picker changes
+  document.getElementById('wl-color').addEventListener('input', function() {
+    document.getElementById('wl-color-hex').value = this.value;
+    updatePreview();
+  });
+  document.getElementById('wl-accent').addEventListener('input', function() {
+    document.getElementById('wl-accent-hex').value = this.value;
+    updatePreview();
+  });
+  // Live preview as user types name
+  document.getElementById('wl-name').addEventListener('input', updatePreview);
+  document.getElementById('wl-tagline').addEventListener('input', updatePreview);
+
+  window.applyBranding = function() {
+    const brand = {
+      name:   document.getElementById('wl-name').value   || 'Nexus ERP',
+      tagline:document.getElementById('wl-tagline').value,
+      color:  document.getElementById('wl-color').value,
+      accent: document.getElementById('wl-accent').value,
+    };
+    localStorage.setItem('nexus_branding', JSON.stringify(brand));
+    // Apply immediately to current page
+    document.documentElement.style.setProperty('--brand-primary', brand.color);
+    document.documentElement.style.setProperty('--brand-accent',  brand.accent);
+    const tenantEl = document.getElementById('tenantName');
+    if (tenantEl) tenantEl.textContent = brand.name;
+    if (typeof NexusUI !== 'undefined') NexusUI.showToast('Branding applied! ✅', 'success');
+    else alert('✅ Branding saved — will apply on next page load');
+  };
+
+  window.resetBranding = function() {
+    localStorage.removeItem('nexus_branding');
+    document.getElementById('wl-name').value    = '';
+    document.getElementById('wl-tagline').value = '';
+    document.getElementById('wl-color').value   = '#0f3a5a';
+    document.getElementById('wl-color-hex').value = '#0f3a5a';
+    document.getElementById('wl-accent').value  = '#5ba15d';
+    document.getElementById('wl-accent-hex').value = '#5ba15d';
+    updatePreview();
+    if (typeof NexusUI !== 'undefined') NexusUI.showToast('Branding reset to default', 'info');
+  };
+
+  // Load saved branding on open
+  const saved = JSON.parse(localStorage.getItem('nexus_branding') || '{}');
+  if (saved.name)   document.getElementById('wl-name').value       = saved.name;
+  if (saved.tagline)document.getElementById('wl-tagline').value    = saved.tagline;
+  if (saved.color)  { document.getElementById('wl-color').value    = saved.color;  document.getElementById('wl-color-hex').value  = saved.color; }
+  if (saved.accent) { document.getElementById('wl-accent').value   = saved.accent; document.getElementById('wl-accent-hex').value = saved.accent; }
+  updatePreview();
+
+  window.saveSettings = async function() {
+    const btn = document.getElementById('saveBtn');
+    const status = document.getElementById('save-status');
+    btn.disabled = true;
+    btn.textContent = 'Saving...';
+
+    // 1. Update admin name if changed
+    const newName = document.getElementById('s-adminname').value.trim();
+    if (newName && typeof NexusAPI !== 'undefined') {
+      try {
+        const r = await NexusAPI.post('/admin/update-name', { name: newName });
+        if (r?.success) {
+          const u = JSON.parse(localStorage.getItem('nexus_user') || '{}');
+          u.name = newName;
+          localStorage.setItem('nexus_user', JSON.stringify(u));
+          // Update sidebar display
+          const nameEl = document.getElementById('userName');
+          if (nameEl) nameEl.textContent = newName;
+        }
+      } catch(_) {}
+    }
+
+    // 2. Save preferences to localStorage
+    const prefs = {
+      currency: document.getElementById('s-currency').value,
+      lang: document.getElementById('s-lang').value,
+      modules: {
+        grc:  document.getElementById('mod-grc').checked,
+        btp:  document.getElementById('mod-btp').checked,
+        ewm:  document.getElementById('mod-ewm').checked,
+        fico: document.getElementById('mod-fico').checked,
+        sac:  document.getElementById('mod-sac').checked,
+      },
+      security: {
+        mfa:  document.getElementById('sec-mfa').checked,
+        sso:  document.getElementById('sec-sso').checked,
+        enc:  document.getElementById('sec-enc').checked,
+        rate: document.getElementById('sec-rate').checked,
+      }
+    };
+    localStorage.setItem('nexus_settings', JSON.stringify(prefs));
+
+    // Show success
+    status.style.display = 'block';
+    status.style.background = '#f0fdf4';
+    status.style.border = '1px solid #bbf7d0';
+    status.style.color = '#15803d';
+    status.textContent = '✅ Settings saved successfully';
+    btn.textContent = 'Save Changes';
+    btn.disabled = false;
+    setTimeout(() => { status.style.display = 'none'; }, 3000);
+  };
+})();
+</script>
+</main>
+</body>
+</html>

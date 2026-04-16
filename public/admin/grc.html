@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<title>Nexus ERP — GRC</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+</head>
+<body>
+<main style="padding:28px 32px; font-family:'Inter',sans-serif;">
+<style>
+.grc-card { background:white; border-radius:14px; box-shadow:0 2px 10px rgba(0,0,0,.06); padding:20px; }
+.grc-kpi { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:14px; margin-bottom:24px; }
+.grc-main { display:grid; grid-template-columns:300px 1fr; gap:20px; }
+@media(max-width:768px){ .grc-main{grid-template-columns:1fr;} }
+.risk-heat-map { display:grid; grid-template-columns:repeat(5,1fr); gap:3px; width:100%; aspect-ratio:1; max-width:260px; margin:0 auto; }
+.risk-cell { border-radius:4px; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:700; color:white; cursor:pointer; transition:.2s; aspect-ratio:1; }
+.risk-cell:hover { opacity:.8; transform:scale(1.06); }
+.rc-low    { background:#5ba15d; }
+.rc-med    { background:#f5b335; color:#1e293b; }
+.rc-high   { background:#e57e25; }
+.rc-crit   { background:#ef4444; }
+.risk-badge { display:inline-block; padding:3px 8px; border-radius:6px; font-size:11px; font-weight:700; }
+.rb-high   { background:#fff0e6; color:#e57e25; }
+.rb-crit   { background:#fee2e2; color:#ef4444; }
+.rb-med    { background:#fef9c3; color:#92400e; }
+.risk-tr { cursor:pointer; }
+.risk-tr:hover td { background:#f8fafc; }
+td,th { padding:10px 12px; font-size:13px; border-bottom:1px solid #f1f5f9; text-align:left; }
+th { font-size:11px; color:#94a3b8; font-weight:600; text-transform:uppercase; }
+</style>
+
+<!-- Header -->
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;flex-wrap:wrap;gap:12px;">
+  <div>
+    <h1 style="font-size:22px;font-weight:900;color:#0f3a5a;margin:0;">🛡️ Governance, Risk &amp; Compliance (GRC)</h1>
+    <p style="font-size:13px;color:#64748b;margin:4px 0 0;">Risk management, SoD controls &amp; regulatory compliance (SAP GRC)</p>
+  </div>
+  <div style="display:flex;gap:10px;">
+    <button style="background:#ef4444;color:white;border:none;border-radius:10px;padding:8px 18px;font-size:13px;font-weight:600;cursor:pointer;" onclick="openRiskModal()">+ Add Risk</button>
+    <button style="background:#f1f5f9;color:#0f3a5a;border:none;border-radius:10px;padding:8px 18px;font-size:13px;font-weight:600;cursor:pointer;" onclick="loadRisks()">↺ Refresh</button>
+  </div>
+</div>
+
+<!-- KPIs -->
+<div class="grc-kpi">
+  <div style="background:linear-gradient(135deg,#ef4444,#dc2626);color:white;border-radius:14px;padding:18px;">
+    <p style="font-size:11px;opacity:.7;margin:0 0 6px;font-weight:600;">High Residual Risks</p>
+    <p style="font-size:28px;font-weight:900;margin:0;" id="kpi-highrisks">—</p>
+  </div>
+  <div style="background:linear-gradient(135deg,#5ba15d,#2e7d32);color:white;border-radius:14px;padding:18px;">
+    <p style="font-size:11px;opacity:.7;margin:0 0 6px;font-weight:600;">Control Effectiveness</p>
+    <p style="font-size:28px;font-weight:900;margin:0;" id="kpi-effectiveness">94%</p>
+  </div>
+  <div style="background:linear-gradient(135deg,#1b7c83,#0e6655);color:white;border-radius:14px;padding:18px;">
+    <p style="font-size:11px;opacity:.7;margin:0 0 6px;font-weight:600;">SoD Conflicts</p>
+    <p style="font-size:28px;font-weight:900;margin:0;" id="kpi-sod">5</p>
+  </div>
+  <div style="background:linear-gradient(135deg,#f5b335,#e0a028);color:#1e293b;border-radius:14px;padding:18px;">
+    <p style="font-size:11px;opacity:.7;margin:0 0 6px;font-weight:600;">Open Audits</p>
+    <p style="font-size:28px;font-weight:900;margin:0;" id="kpi-audits">3</p>
+  </div>
+</div>
+
+<!-- Main Grid -->
+<div class="grc-main">
+  <!-- Heat Map -->
+  <div class="grc-card">
+    <h2 style="font-size:15px;font-weight:700;color:#0f3a5a;margin:0 0 16px;">📊 Risk Heat Map</h2>
+    <div class="risk-heat-map" id="riskHeatMap"></div>
+    <div style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap;font-size:11px;font-weight:600;">
+      <span style="display:flex;align-items:center;gap:4px;"><span style="width:12px;height:12px;background:#5ba15d;border-radius:3px;display:inline-block;"></span>Low</span>
+      <span style="display:flex;align-items:center;gap:4px;"><span style="width:12px;height:12px;background:#f5b335;border-radius:3px;display:inline-block;"></span>Medium</span>
+      <span style="display:flex;align-items:center;gap:4px;"><span style="width:12px;height:12px;background:#e57e25;border-radius:3px;display:inline-block;"></span>High</span>
+      <span style="display:flex;align-items:center;gap:4px;"><span style="width:12px;height:12px;background:#ef4444;border-radius:3px;display:inline-block;"></span>Critical</span>
+    </div>
+    <p style="font-size:11px;color:#94a3b8;text-align:center;margin-top:10px;">Impact (Y) × Likelihood (X)</p>
+  </div>
+
+  <!-- Risk Register -->
+  <div class="grc-card">
+    <h2 style="font-size:15px;font-weight:700;color:#0f3a5a;margin:0 0 16px;">📋 Active Risk Register</h2>
+    <div style="overflow-x:auto;">
+      <table style="width:100%;border-collapse:collapse;">
+        <thead>
+          <tr><th>Risk ID</th><th>Category</th><th>Likelihood</th><th>Impact</th><th>Score</th><th>Status</th></tr>
+        </thead>
+        <tbody id="riskRegistry">
+          <tr><td colspan="6" style="text-align:center;color:#94a3b8;padding:24px;">Loading risks...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Add Risk Modal -->
+<div id="riskModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:99999;align-items:center;justify-content:center;">
+  <div style="background:white;border-radius:16px;padding:28px;width:460px;max-width:90vw;max-height:90vh;overflow-y:auto;box-shadow:0 25px 60px rgba(0,0,0,.3);">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+      <h2 style="font-size:17px;font-weight:800;color:#0f3a5a;margin:0;">Add New Risk</h2>
+      <button onclick="closeRiskModal()" style="background:#f1f5f9;border:none;border-radius:8px;width:30px;height:30px;cursor:pointer;font-size:15px;">✕</button>
+    </div>
+    <div style="display:grid;gap:12px;">
+      <div>
+        <label style="font-size:12px;font-weight:600;color:#475569;display:block;margin-bottom:4px;">Category</label>
+        <select id="r-cat" style="width:100%;border:1.5px solid #e2e8f0;border-radius:8px;padding:8px 12px;font-size:13px;outline:none;">
+          <option>Financial</option><option>Operational</option><option>IT/Technical</option><option>Compliance</option><option>Reputational</option>
+        </select>
+      </div>
+      <div>
+        <label style="font-size:12px;font-weight:600;color:#475569;display:block;margin-bottom:4px;">Description</label>
+        <input id="r-desc" style="width:100%;border:1.5px solid #e2e8f0;border-radius:8px;padding:8px 12px;font-size:13px;outline:none;box-sizing:border-box;" placeholder="Describe the risk...">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div>
+          <label style="font-size:12px;font-weight:600;color:#475569;display:block;margin-bottom:4px;">Likelihood (1-5)</label>
+          <input type="number" id="r-like" min="1" max="5" value="3" style="width:100%;border:1.5px solid #e2e8f0;border-radius:8px;padding:8px 12px;font-size:13px;outline:none;box-sizing:border-box;">
+        </div>
+        <div>
+          <label style="font-size:12px;font-weight:600;color:#475569;display:block;margin-bottom:4px;">Impact (1-5)</label>
+          <input type="number" id="r-impact" min="1" max="5" value="3" style="width:100%;border:1.5px solid #e2e8f0;border-radius:8px;padding:8px 12px;font-size:13px;outline:none;box-sizing:border-box;">
+        </div>
+      </div>
+      <div>
+        <label style="font-size:12px;font-weight:600;color:#475569;display:block;margin-bottom:4px;">Owner</label>
+        <input id="r-owner" style="width:100%;border:1.5px solid #e2e8f0;border-radius:8px;padding:8px 12px;font-size:13px;outline:none;box-sizing:border-box;" placeholder="Risk owner name...">
+      </div>
+      <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:6px;">
+        <button onclick="closeRiskModal()" style="background:#f1f5f9;color:#475569;border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer;">Cancel</button>
+        <button onclick="submitRisk()" style="background:#0f3a5a;color:white;border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer;">Add Risk</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  // Heat map matrix (5×5) — rows=impact(5→1), cols=likelihood(1→5)
+  const heatMatrix = [
+    [2,3,3,4,4],
+    [2,2,3,4,4],
+    [1,2,2,3,4],
+    [1,1,2,2,3],
+    [1,1,1,1,2]
+  ];
+  const levelClass = ['','rc-low','rc-med','rc-high','rc-crit'];
+
+  function renderHeatMap() {
+    const el = document.getElementById('riskHeatMap');
+    let html = '';
+    heatMatrix.forEach(row => row.forEach(lvl => {
+      html += `<div class="risk-cell ${levelClass[lvl]}">${lvl}</div>`;
+    }));
+    el.innerHTML = html;
+  }
+
+  async function loadRisks() {
+    const tbody = document.getElementById('riskRegistry');
+    try {
+      const d = typeof NexusAPI !== 'undefined' ? await NexusAPI.get('/grc/risks') : null;
+      if (d?.success && d.data.length) {
+        const scoreLabel = s => s >= 20 ? ['rb-crit','Critical'] : s >= 12 ? ['rb-high','High'] : s >= 6 ? ['rb-med','Medium'] : ['','Low'];
+        tbody.innerHTML = d.data.map(r => {
+          const score = (r.likelihood||1)*(r.impact||1);
+          const [cls, lbl] = scoreLabel(score);
+          return `<tr class="risk-tr">
+            <td style="font-weight:700;">${r.id}</td>
+            <td>${r.category||'General'}</td>
+            <td>${r.likelihood||'—'}/5</td>
+            <td>${r.impact||'—'}/5</td>
+            <td><span class="risk-badge ${cls}">${score} (${lbl})</span></td>
+            <td style="color:#5ba15d;font-weight:600;">${r.status||'Open'}</td>
+          </tr>`;
+        }).join('');
+        document.getElementById('kpi-highrisks').textContent = d.data.filter(r=>(r.likelihood||0)*(r.impact||0)>=12).length;
+      } else {
+        // Fallback static data
+        tbody.innerHTML = `
+          <tr class="risk-tr"><td style="font-weight:700;">R-1002</td><td>Financial (Liquidity)</td><td>4/5</td><td>3/5</td><td><span class="risk-badge rb-high">12 (High)</span></td><td style="color:#5ba15d;font-weight:600;">In Treatment</td></tr>
+          <tr class="risk-tr"><td style="font-weight:700;">R-1005</td><td>IT (Privilege Access)</td><td>5/5</td><td>5/5</td><td><span class="risk-badge rb-crit">25 (Critical)</span></td><td style="color:#e57e25;font-weight:600;">Pending</td></tr>
+          <tr class="risk-tr"><td style="font-weight:700;">R-1008</td><td>Compliance (GDPR)</td><td>2/5</td><td>4/5</td><td><span class="risk-badge rb-med">8 (Medium)</span></td><td style="color:#64748b;font-weight:600;">Monitoring</td></tr>`;
+        document.getElementById('kpi-highrisks').textContent = '12';
+      }
+    } catch(_) {}
+  }
+
+  window.openRiskModal  = () => { document.getElementById('riskModal').style.display='flex'; };
+  window.closeRiskModal = () => { document.getElementById('riskModal').style.display='none'; };
+  window.loadRisks      = loadRisks;
+
+  window.submitRisk = async function() {
+    const payload = {
+      category:   document.getElementById('r-cat').value,
+      description:document.getElementById('r-desc').value,
+      likelihood: +document.getElementById('r-like').value,
+      impact:     +document.getElementById('r-impact').value,
+      owner:      document.getElementById('r-owner').value
+    };
+    if (!payload.description.trim()) return alert('Please enter a risk description');
+    try {
+      if (typeof NexusAPI !== 'undefined') {
+        const d = await NexusAPI.post('/grc/risks', payload);
+        if (d?.success) { closeRiskModal(); loadRisks(); return; }
+      }
+      // Fallback: show success anyway (mock)
+      closeRiskModal();
+      if (typeof NexusUI !== 'undefined') NexusUI.showToast('Risk added (local)', 'success');
+    } catch(e) { alert('Error: ' + e.message); }
+  };
+
+  renderHeatMap();
+  loadRisks();
+})();
+</script>
+</main>
+</body>
+</html>

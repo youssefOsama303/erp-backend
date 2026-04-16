@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nexus Erp System — Admin Dashboard</title>
+  <meta name="description" content="ERP management dashboard for Nexus Store — orders, inventory, HR, and financials.">
+  <link rel="icon" type="image/svg+xml" href="/assets/nexus-logo.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/shared/css/dashboard.css">
+</head>
+<body>
+
+<!-- ══ LOGIN GATE ══ -->
+<div id="login-gate" style="display:none">
+  <div style="text-align:center">
+    <img src="/assets/nexus-logo.svg" alt="Nexus Erp System" style="width:84px;height:42px;object-fit:contain;margin:0 auto 16px;display:block">
+    <h2>Admin Access Required</h2>
+    <p style="margin-top:6px">Please log in to access the ERP dashboard.</p>
+    <p style="margin-top:6px;font-size:12px;color:var(--text-light)">Support Hotline: +20 100 000 0000</p>
+    <button class="btn-primary" style="margin-top:18px" onclick="window.location.href='../login.html'">Go to Login</button>
+  </div>
+</div>
+
+<!-- ══ SIDEBAR ══ -->
+<div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <img src="/assets/nexus-logo.svg" alt="Nexus Erp System" style="width:68px;height:34px;object-fit:contain;flex-shrink:0">
+    <div>
+      <div class="logo-name">Nexus Erp System</div>
+      <div class="logo-sub">ADMIN PANEL</div>
+    </div>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-label">Overview</div>
+    <button class="nav-item active" id="nav-dashboard" onclick="scrollToSection('top')">
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+        <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+      </svg>
+      Dashboard
+    </button>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-label">Management</div>
+    <a class="nav-item" href="/admin/accounting.html" data-module="accounting">
+      <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      Accounting
+    </a>
+    <a class="nav-item" href="/admin/purchasing.html" data-module="purchasing">
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+        <line x1="3" y1="6" x2="21" y2="6"/>
+        <path d="M16 10a4 4 0 0 1-8 0"/>
+      </svg>
+      Purchasing
+    </a>
+    <a class="nav-item" href="/admin/sales.html" data-module="sales" onclick="scrollToSection('orders-section')">
+      <svg viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></svg>
+      Sales/Orders
+      <span class="nav-badge" id="badge-orders" style="display:none">0</span>
+    </a>
+    <a class="nav-item" href="/admin/inventory.html" data-module="inventory" onclick="scrollToSection('stock-section')">
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+        <polyline points="9 22 9 12 15 12 15 22"/>
+      </svg>
+      Inventory
+      <span class="nav-badge" id="badge-stock" style="display:none">0</span>
+    </a>
+    <a class="nav-item" href="/admin/hr.html" data-module="hr">
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+        <circle cx="9" cy="7" r="4"/>
+        <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+        <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+      </svg>
+      HR & Payroll
+    </a>
+    <a class="nav-item" href="/admin/production.html" data-module="production">
+      <svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+      Production (PP)
+    </a>
+    <a class="nav-item" href="/admin/crm.html" data-module="crm">
+      <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      CRM
+    </a>
+    <a class="nav-item" href="/admin/projects.html" data-module="projects">
+      <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+      Projects
+    </a>
+    <a class="nav-item" href="/admin/reports.html" data-module="reports">
+      <svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+      Reports
+    </a>
+  </div>
+
+  <div class="sidebar-section" style="margin-top:auto">
+    <div class="sidebar-label">Links</div>
+    <a class="nav-item" href="/admin/grc.html" data-module="grc">
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+      </svg>
+      GRC
+    </a>
+    <a class="nav-item" href="/admin/btp.html" data-module="btp">
+      <svg viewBox="0 0 24 24"><path d="M2 12h4l2-8 3 16 3-8h10"/></svg>
+      BTP Explorer
+    </a>
+    <a class="nav-item" href="/health.html" target="_blank">
+      <svg viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+      Health Check
+    </a>
+  </div>
+
+  <div class="sidebar-footer">
+    <div class="av" id="sidebar-avatar">A</div>
+    <div>
+      <div class="av-name" id="sidebar-name">Admin</div>
+      <div style="font-size:10px;color:var(--text-light)" id="sidebar-role">ERP Manager</div>
+    </div>
+  </div>
+</aside>
+
+<!-- ══ MAIN ══ -->
+<div class="main-wrap">
+
+  <!-- NAVBAR -->
+  <nav class="navbar" id="top">
+    <button class="hamburger" id="hamburger-btn" onclick="toggleSidebar()">
+      <svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+    <div>
+      <div class="navbar-title">Dashboard</div>
+      <div class="navbar-sub" id="dash-date">Loading...</div>
+    </div>
+    <div class="navbar-spacer"></div>
+    <div class="navbar-sub" style="margin-right:8px">Support Hotline: +20 100 000 0000</div>
+    <button class="refresh-btn" onclick="loadAll()">
+      <svg viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+      Refresh
+    </button>
+    <div class="notif-wrap">
+      <button class="notif-btn" id="notif-btn" title="Notifications">
+        <svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        <span class="notif-count" id="notif-count">0</span>
+      </button>
+      <div class="notif-menu" id="notif-menu">
+        <div class="notif-head">
+          <span>Notifications</span>
+          <button class="notif-read-all" id="notif-read-all" type="button">Mark all read</button>
+        </div>
+        <div id="notif-list"><div class="notif-empty">No notifications yet.</div></div>
+      </div>
+    </div>
+    <button class="theme-btn" id="theme-btn" onclick="toggleTheme()" title="Toggle theme">
+      <svg id="icon-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+      <svg id="icon-moon" viewBox="0 0 24 24" style="display:none"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+  </nav>
+
+  <!-- PAGE CONTENT -->
+  <main class="page-content">
+
+    <!-- METRIC CARDS -->
+    <section class="metrics-grid" id="metrics-section">
+      <!-- filled by JS -->
+      <div class="metric-card" id="mc-revenue">
+        <div class="metric-header">
+          <div class="metric-label">Total Orders Value</div>
+          <div class="metric-icon blue">
+            <svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          </div>
+        </div>
+        <div class="metric-value skel skel-line" id="mv-revenue" style="height:30px;width:120px"></div>
+        <div class="metric-compare" id="mc-rev-sub"><span class="skel skel-line" style="width:80px"></span></div>
+      </div>
+
+      <div class="metric-card" id="mc-orders">
+        <div class="metric-header">
+          <div class="metric-label">Total Orders</div>
+          <div class="metric-icon green">
+            <svg viewBox="0 0 24 24"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>
+          </div>
+        </div>
+        <div class="metric-value skel skel-line" id="mv-orders" style="height:30px;width:80px"></div>
+        <div class="metric-compare" id="mc-ord-sub"><span class="skel skel-line" style="width:90px"></span></div>
+      </div>
+
+      <div class="metric-card" id="mc-products">
+        <div class="metric-header">
+          <div class="metric-label">Active Products</div>
+          <div class="metric-icon orange">
+            <svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+          </div>
+        </div>
+        <div class="metric-value skel skel-line" id="mv-products" style="height:30px;width:60px"></div>
+        <div class="metric-compare" id="mc-prod-sub"><span class="skel skel-line" style="width:100px"></span></div>
+      </div>
+
+      <div class="metric-card" id="mc-lowstock">
+        <div class="metric-header">
+          <div class="metric-label">Low / Out of Stock</div>
+          <div class="metric-icon red">
+            <svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          </div>
+        </div>
+        <div class="metric-value skel skel-line" id="mv-lowstock" style="height:30px;width:50px"></div>
+        <div class="metric-compare" id="mc-stk-sub"><span class="skel skel-line" style="width:110px"></span></div>
+      </div>
+    </section>
+
+    <!-- CHARTS ROW -->
+    <section class="charts-row">
+
+      <!-- Bar Chart: Orders by Status -->
+      <div class="panel">
+        <div class="panel-head">
+          <div class="panel-title">
+            <svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+            Monthly Order Summary
+          </div>
+          <div class="panel-meta" id="bar-meta">Last 6 months</div>
+        </div>
+        <div class="panel-body">
+          <div class="bar-chart-wrap" id="bar-chart-wrap">
+            <div class="skel" style="height:160px;border-radius:8px"></div>
+          </div>
+          <div class="chart-legend" id="bar-legend" style="display:none">
+            <div class="legend-item"><div class="legend-dot" style="background:#3b82f6"></div>Delivered</div>
+            <div class="legend-item"><div class="legend-dot" style="background:#60a5fa"></div>Processing</div>
+            <div class="legend-item"><div class="legend-dot" style="background:#bfdbfe"></div>New</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Donut Chart: Order Status -->
+      <div class="panel">
+        <div class="panel-head">
+          <div class="panel-title">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 1 10 10"/></svg>
+            Order Status
+          </div>
+          <div class="panel-meta">All time</div>
+        </div>
+        <div class="panel-body">
+          <div class="donut-wrap" id="donut-wrap">
+            <div class="skel" style="width:140px;height:140px;border-radius:50%"></div>
+            <div style="width:100%">
+              <div class="skel skel-line"></div>
+              <div class="skel skel-line" style="width:70%"></div>
+              <div class="skel skel-line" style="width:55%"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- TABLES ROW -->
+    <section class="tables-row">
+
+      <!-- Recent Orders -->
+      <div class="panel" id="orders-section">
+        <div class="panel-head">
+          <div class="panel-title">
+            <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            Recent Orders
+          </div>
+          <div class="panel-meta" id="orders-count">Loading...</div>
+        </div>
+        <div style="overflow-x:auto">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Order #</th>
+                <th>Date</th>
+                <th>Items</th>
+                <th>Total</th>
+                <th>Status</th>
+                <th>Payment</th>
+              </tr>
+            </thead>
+            <tbody id="orders-tbody">
+              <tr><td colspan="6"><div class="skel skel-row"></div><div class="skel skel-row"></div><div class="skel skel-row"></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Low Stock Alerts -->
+      <div class="panel" id="stock-section">
+        <div class="panel-head">
+          <div class="panel-title">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            Low / Out of Stock
+          </div>
+          <div class="panel-meta" id="stock-count">Loading...</div>
+        </div>
+        <div style="overflow-x:auto">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Product</th>
+                <th>Brand</th>
+                <th>Category</th>
+                <th>Status</th>
+                <th>Price</th>
+              </tr>
+            </thead>
+            <tbody id="stock-tbody">
+              <tr><td colspan="5"><div class="skel skel-row"></div><div class="skel skel-row"></div><div class="skel skel-row"></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+</div>
+
+<script src="/shared/js/utils.js" defer></script>
+<script src="/js/dashboard.js" defer></script>
+<script src="./js/admin.js" defer></script>
+</body>
+</html>

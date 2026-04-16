@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<title>Nexus ERP — CRM</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+</head>
+<body>
+<main style="padding:28px 32px; font-family:'Inter',sans-serif; min-height:100%;">
+<style>
+/* CRM scoped styles — injected with SPA */
+.crm-kpi     { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:14px; margin-bottom:22px; }
+.crm-card    { background:white; border-radius:14px; box-shadow:0 2px 10px rgba(0,0,0,.06); padding:20px; }
+.crm-tabs    { display:flex; gap:4px; margin-bottom:20px; flex-wrap:wrap; }
+.crm-tab     { padding:7px 18px; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; border:none; background:#f1f5f9; color:#64748b; transition:.2s; }
+.crm-tab.active { background:#0f3a5a; color:white; }
+.crm-tab-panel { display:none; }
+.crm-tab-panel.active { display:block; }
+/* Table */
+.crm-table  { width:100%; border-collapse:collapse; }
+.crm-th     { padding:10px 12px; font-size:11px; color:#94a3b8; font-weight:600; text-transform:uppercase; border-bottom:1px solid #f1f5f9; text-align:left; }
+.crm-td     { padding:10px 12px; font-size:13px; border-bottom:1px solid #f8fafc; text-align:left; }
+.crm-tr:hover td { background:#f8fafc; }
+.crm-badge  { display:inline-block; padding:3px 9px; border-radius:20px; font-size:11px; font-weight:700; }
+.badge-new    { background:#dbeafe; color:#1e40af; }
+.badge-qual   { background:#fef9c3; color:#92400e; }
+.badge-prop   { background:#fed7aa; color:#c2410c; }
+.badge-neg    { background:#e0e7ff; color:#3730a3; }
+.badge-won    { background:#dcfce7; color:#15803d; }
+.badge-lost   { background:#fee2e2; color:#991b1b; }
+/* Kanban */
+.kanban-board { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:14px; }
+.kanban-col   { background:#f8fafc; border-radius:12px; padding:12px; min-height:220px; }
+.kanban-head  { font-size:12px; font-weight:700; color:#475569; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center; }
+.kanban-card  { background:white; border-radius:8px; padding:12px; margin-bottom:8px; box-shadow:0 1px 4px rgba(0,0,0,.06); cursor:pointer; font-size:12px; }
+.kanban-card strong { display:block; font-size:13px; font-weight:700; color:#0f3a5a; margin-bottom:3px; }
+.kanban-card span   { color:#94a3b8; font-size:11px; }
+/* Modal */
+.crm-modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:99999; align-items:center; justify-content:center; }
+.crm-modal-box { background:white; border-radius:16px; padding:28px; width:480px; max-width:90vw; max-height:90vh; overflow-y:auto; box-shadow:0 25px 60px rgba(0,0,0,.3); }
+.crm-input { width:100%; border:1.5px solid #e2e8f0; border-radius:8px; padding:8px 12px; font-size:13px; outline:none; box-sizing:border-box; font-family:'Inter',sans-serif; }
+.crm-input:focus { border-color:#1b7c83; }
+/* Search */
+.crm-search { border:1.5px solid #e2e8f0; border-radius:8px; padding:7px 12px; font-size:13px; outline:none; width:220px; }
+.crm-search:focus { border-color:#1b7c83; }
+/* Funnel */
+.funnel-bar { height:38px; background:#1b7c83; border-radius:8px; display:flex; align-items:center; justify-content:space-between; padding:0 14px; font-size:12px; font-weight:700; color:white; margin-bottom:8px; transition:width .5s; }
+.funnel-label { font-size:11px; opacity:.8; }
+</style>
+
+<!-- Header -->
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:22px;flex-wrap:wrap;gap:12px;">
+  <div>
+    <h1 style="font-size:22px;font-weight:900;color:#0f3a5a;margin:0;">❤️ Customer Relationship Management (CRM)</h1>
+    <p style="font-size:13px;color:#64748b;margin:4px 0 0;">Leads, opportunities, accounts &amp; customer journey tracking</p>
+  </div>
+  <div style="display:flex;gap:10px;flex-wrap:wrap;">
+    <button class="crm-tab" style="background:#1b7c83;color:white;" onclick="openLeadModal()">+ New Lead</button>
+    <button class="crm-tab" onclick="loadCRM()">↺ Refresh</button>
+  </div>
+</div>
+
+<!-- KPIs -->
+<div class="crm-kpi">
+  <div style="background:linear-gradient(135deg,#0f3a5a,#1a5276);color:white;border-radius:14px;padding:18px;">
+    <p style="font-size:11px;opacity:.7;margin:0 0 6px;font-weight:600;">Total Accounts</p>
+    <p style="font-size:28px;font-weight:900;margin:0;" id="crm-kpi-accounts">—</p>
+  </div>
+  <div style="background:linear-gradient(135deg,#5ba15d,#2e7d32);color:white;border-radius:14px;padding:18px;">
+    <p style="font-size:11px;opacity:.7;margin:0 0 6px;font-weight:600;">Open Opportunities</p>
+    <p style="font-size:28px;font-weight:900;margin:0;" id="crm-kpi-opps">—</p>
+  </div>
+  <div style="background:linear-gradient(135deg,#1b7c83,#0e6655);color:white;border-radius:14px;padding:18px;">
+    <p style="font-size:11px;opacity:.7;margin:0 0 6px;font-weight:600;">Retention Rate</p>
+    <p style="font-size:28px;font-weight:900;margin:0;">95.4%</p>
+  </div>
+  <div style="background:linear-gradient(135deg,#f5b335,#e0a028);color:#1e293b;border-radius:14px;padding:18px;">
+    <p style="font-size:11px;opacity:.7;margin:0 0 6px;font-weight:600;">Avg LTV (EGP)</p>
+    <p style="font-size:28px;font-weight:900;margin:0;">45K</p>
+  </div>
+</div>
+
+<!-- Tabs -->
+<div class="crm-tabs" id="crmTabs">
+  <button class="crm-tab active" onclick="switchTab('leads')">🎯 Leads</button>
+  <button class="crm-tab" onclick="switchTab('opportunities')">💼 Opportunities</button>
+  <button class="crm-tab" onclick="switchTab('accounts')">🏢 Accounts</button>
+  <button class="crm-tab" onclick="switchTab('funnel')">🔽 Sales Funnel</button>
+</div>
+
+<!-- Tab: Leads -->
+<div class="crm-tab-panel active" id="panel-leads">
+  <div class="crm-card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
+      <h2 style="font-size:15px;font-weight:700;color:#0f3a5a;margin:0;">Lead Register</h2>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <input class="crm-search" id="leadSearch" placeholder="🔍 Search leads..." oninput="filterLeads()">
+        <select class="crm-search" style="width:140px;" id="leadStatus" onchange="filterLeads()">
+          <option value="">All Stages</option>
+          <option value="new">New</option>
+          <option value="qualified">Qualified</option>
+          <option value="proposal">Proposal</option>
+          <option value="negotiation">Negotiation</option>
+          <option value="won">Won</option>
+          <option value="lost">Lost</option>
+        </select>
+      </div>
+    </div>
+    <div style="overflow-x:auto;">
+      <table class="crm-table">
+        <thead><tr>
+          <th class="crm-th">Lead Name</th>
+          <th class="crm-th">Company</th>
+          <th class="crm-th">Email</th>
+          <th class="crm-th">Phone</th>
+          <th class="crm-th">Stage</th>
+          <th class="crm-th">Value (EGP)</th>
+          <th class="crm-th">Actions</th>
+        </tr></thead>
+        <tbody id="leadsBody">
+          <tr><td colspan="7" style="text-align:center;padding:28px;color:#94a3b8;">Loading leads...</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <!-- Pagination -->
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:14px;font-size:12px;color:#64748b;" id="leadPagination"></div>
+  </div>
+</div>
+
+<!-- Tab: Opportunities -->
+<div class="crm-tab-panel" id="panel-opportunities">
+  <div class="crm-card" style="margin-bottom:16px;">
+    <h2 style="font-size:15px;font-weight:700;color:#0f3a5a;margin:0 0 14px;">Pipeline — Kanban View</h2>
+    <div class="kanban-board" id="kanbanBoard">
+      <div class="kanban-col">
+        <div class="kanban-head"><span>🆕 New</span><span class="badge-new crm-badge" id="k-new-ct">0</span></div>
+        <div id="k-new"></div>
+      </div>
+      <div class="kanban-col">
+        <div class="kanban-head"><span>🔍 Qualified</span><span class="badge-qual crm-badge" id="k-qual-ct">0</span></div>
+        <div id="k-qualified"></div>
+      </div>
+      <div class="kanban-col">
+        <div class="kanban-head"><span>📄 Proposal</span><span class="badge-prop crm-badge" id="k-prop-ct">0</span></div>
+        <div id="k-proposal"></div>
+      </div>
+      <div class="kanban-col">
+        <div class="kanban-head"><span>🤝 Negotiation</span><span class="badge-neg crm-badge" id="k-neg-ct">0</span></div>
+        <div id="k-negotiation"></div>
+      </div>
+      <div class="kanban-col">
+        <div class="kanban-head"><span>✅ Won</span><span class="badge-won crm-badge" id="k-won-ct">0</span></div>
+        <div id="k-won"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Tab: Accounts -->
+<div class="crm-tab-panel" id="panel-accounts">
+  <div class="crm-card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
+      <h2 style="font-size:15px;font-weight:700;color:#0f3a5a;margin:0;">Customer Accounts</h2>
+      <input class="crm-search" id="accSearch" placeholder="🔍 Search accounts..." oninput="filterAccounts()">
+    </div>
+    <div style="overflow-x:auto;">
+      <table class="crm-table">
+        <thead><tr>
+          <th class="crm-th">Code</th>
+          <th class="crm-th">Name</th>
+          <th class="crm-th">Email</th>
+          <th class="crm-th">Phone</th>
+          <th class="crm-th">City</th>
+          <th class="crm-th">Actions</th>
+        </tr></thead>
+        <tbody id="accountsBody">
+          <tr><td colspan="6" style="text-align:center;padding:28px;color:#94a3b8;">Loading accounts...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Tab: Funnel -->
+<div class="crm-tab-panel" id="panel-funnel">
+  <div style="display:grid;grid-template-columns:1fr 320px;gap:20px;">
+    <div class="crm-card">
+      <h2 style="font-size:15px;font-weight:700;color:#0f3a5a;margin:0 0 18px;">Sales Funnel</h2>
+      <div id="funnelBars" style="padding:0 20px;"></div>
+    </div>
+    <div class="crm-card">
+      <h2 style="font-size:15px;font-weight:700;color:#0f3a5a;margin:0 0 16px;">Customer Segments</h2>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:#f8fafc;border-radius:10px;border-left:4px solid #0f3a5a;">
+          <div><p style="font-size:13px;font-weight:700;margin:0;">VIP Customers</p><p style="font-size:11px;color:#94a3b8;margin:0;">&gt; 500K EGP/year</p></div>
+          <span style="font-size:20px;font-weight:900;color:#0f3a5a;" id="seg-vip">12</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:#f8fafc;border-radius:10px;border-left:4px solid #5ba15d;">
+          <div><p style="font-size:13px;font-weight:700;margin:0;">Active Customers</p><p style="font-size:11px;color:#94a3b8;margin:0;">&gt; 100K EGP/year</p></div>
+          <span style="font-size:20px;font-weight:900;color:#5ba15d;" id="seg-active">—</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:#f8fafc;border-radius:10px;border-left:4px solid #e2e8f0;">
+          <div><p style="font-size:13px;font-weight:700;margin:0;">New (30 days)</p><p style="font-size:11px;color:#94a3b8;margin:0;">Recently added</p></div>
+          <span style="font-size:20px;font-weight:900;color:#64748b;" id="seg-new">84</span>
+        </div>
+      </div>
+      <div style="margin-top:18px;padding-top:14px;border-top:1px solid #f1f5f9;">
+        <p style="font-size:12px;font-weight:700;color:#475569;margin:0 0 8px;">Geographic Split</p>
+        <p style="font-size:12px;color:#64748b;">🌍 Cairo: <strong>65%</strong> of Q1 revenue &nbsp;|&nbsp; Alexandria: <strong>18%</strong> &nbsp;|&nbsp; Other: <strong>17%</strong></p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- New Lead Modal -->
+<div class="crm-modal-overlay" id="leadModal">
+  <div class="crm-modal-box">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+      <h2 style="font-size:17px;font-weight:800;color:#0f3a5a;margin:0;">Add New Lead</h2>
+      <button onclick="closeLeadModal()" style="background:#f1f5f9;border:none;border-radius:8px;width:30px;height:30px;cursor:pointer;font-size:16px;">✕</button>
+    </div>
+    <div style="display:grid;gap:12px;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div><label style="font-size:12px;font-weight:600;color:#475569;display:block;margin-bottom:4px;">Full Name *</label>
+          <input class="crm-input" id="lead-name" placeholder="Lead name..."></div>
+        <div><label style="font-size:12px;font-weight:600;color:#475569;display:block;margin-bottom:4px;">Company</label>
+          <input class="crm-input" id="lead-company" placeholder="Company name..."></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div><label style="font-size:12px;font-weight:600;color:#475569;display:block;margin-bottom:4px;">Email</label>
+          <input class="crm-input" type="email" id="lead-email" placeholder="email@domain.com"></div>
+        <div><label style="font-size:12px;font-weight:600;color:#475569;display:block;margin-bottom:4px;">Phone</label>
+          <input class="crm-input" type="tel" id="lead-phone" placeholder="+20..."></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div><label style="font-size:12px;font-weight:600;color:#475569;display:block;margin-bottom:4px;">Stage</label>
+          <select class="crm-input" id="lead-stage">
+            <option value="new">New</option>
+            <option value="qualified">Qualified</option>
+            <option value="proposal">Proposal</option>
+            <option value="negotiation">Negotiation</option>
+          </select></div>
+        <div><label style="font-size:12px;font-weight:600;color:#475569;display:block;margin-bottom:4px;">Estimated Value (EGP)</label>
+          <input class="crm-input" type="number" id="lead-value" placeholder="0"></div>
+      </div>
+      <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:6px;">
+        <button onclick="closeLeadModal()" style="background:#f1f5f9;color:#475569;border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer;">Cancel</button>
+        <button onclick="submitLead()" style="background:#1b7c83;color:white;border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer;">Save Lead</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  let allLeads     = [];
+  let allAccounts  = [];
+  let currentPage  = 1;
+  const perPage    = 8;
+
+  // ── Tab switching ─────────────────────────────────────────────────────
+  window.switchTab = function(tab) {
+    document.querySelectorAll('.crm-tab-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.crm-tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('panel-' + tab).classList.add('active');
+    event.target.classList.add('active');
+    if (tab === 'opportunities') renderKanban(allLeads);
+    if (tab === 'funnel')        renderFunnel(allLeads);
+  };
+
+  // ── Stage badge ──────────────────────────────────────────────────────
+  function stageBadge(s) {
+    const map = { new:'badge-new', qualified:'badge-qual', proposal:'badge-prop',
+                  negotiation:'badge-neg', won:'badge-won', lost:'badge-lost' };
+    const label = s ? s.charAt(0).toUpperCase() + s.slice(1) : '—';
+    return `<span class="crm-badge ${map[s]||''}">${label}</span>`;
+  }
+
+  // ── Render Leads table ────────────────────────────────────────────────
+  function renderLeads(data) {
+    const tbody = document.getElementById('leadsBody');
+    if (!data.length) {
+      tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:28px;color:#94a3b8;">No leads found</td></tr>`;
+      document.getElementById('leadPagination').innerHTML = '';
+      return;
+    }
+    const start = (currentPage-1)*perPage;
+    const page  = data.slice(start, start+perPage);
+    tbody.innerHTML = page.map(l => `<tr class="crm-tr">
+      <td class="crm-td" style="font-weight:700;">${l.name||l.lead_name||'—'}</td>
+      <td class="crm-td">${l.company||l.organization||'—'}</td>
+      <td class="crm-td">${l.email||'—'}</td>
+      <td class="crm-td">${l.phone||'—'}</td>
+      <td class="crm-td">${stageBadge(l.stage||l.status)}</td>
+      <td class="crm-td">${l.estimated_value ? Number(l.estimated_value).toLocaleString() : l.value ? Number(l.value).toLocaleString() : '—'}</td>
+      <td class="crm-td">
+        <button onclick="deleteLead('${l.id}')" style="background:#fee2e2;color:#991b1b;border:none;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer;">✕ Delete</button>
+      </td>
+    </tr>`).join('');
+    // Pagination info
+    const total = data.length, pages = Math.ceil(total/perPage);
+    document.getElementById('leadPagination').innerHTML = `
+      <span>Showing ${start+1}–${Math.min(start+perPage,total)} of ${total}</span>
+      <div style="display:flex;gap:6px;">
+        <button onclick="changePage(-1)" ${currentPage<=1?'disabled':''} style="padding:4px 10px;border-radius:6px;border:1.5px solid #e2e8f0;cursor:pointer;font-size:12px;">‹ Prev</button>
+        <span style="padding:4px 10px;background:#f1f5f9;border-radius:6px;">${currentPage}/${pages}</span>
+        <button onclick="changePage(1)" ${currentPage>=pages?'disabled':''} style="padding:4px 10px;border-radius:6px;border:1.5px solid #e2e8f0;cursor:pointer;font-size:12px;">Next ›</button>
+      </div>`;
+  }
+
+  window.changePage = function(dir) { currentPage += dir; filterLeads(); };
+
+  window.filterLeads = function() {
+    const q   = (document.getElementById('leadSearch')?.value||'').toLowerCase();
+    const st  = document.getElementById('leadStatus')?.value || '';
+    const filtered = allLeads.filter(l => {
+      const matchQ  = !q || (l.name||l.lead_name||'').toLowerCase().includes(q) || (l.company||'').toLowerCase().includes(q);
+      const matchSt = !st || (l.stage||l.status||'') === st;
+      return matchQ && matchSt;
+    });
+    currentPage = 1;
+    renderLeads(filtered);
+  };
+
+  // ── Render Kanban ────────────────────────────────────────────────────
+  function renderKanban(data) {
+    const stages = ['new','qualified','proposal','negotiation','won'];
+    stages.forEach(s => {
+      const col = document.getElementById('k-' + s);
+      const ct  = document.getElementById('k-' + s + '-ct');
+      if (!col) return;
+      const items = data.filter(l => (l.stage||l.status||'new').toLowerCase() === s);
+      ct.textContent = items.length;
+      col.innerHTML = items.length
+        ? items.map(l => `<div class="kanban-card">
+            <strong>${l.name||l.lead_name||'—'}</strong>
+            <span>${l.company||''}</span>
+            ${l.estimated_value||l.value ? `<div style="margin-top:5px;font-size:11px;font-weight:700;color:#5ba15d;">${Number(l.estimated_value||l.value).toLocaleString()} EGP</div>`:``}
+          </div>`).join('')
+        : `<div style="font-size:11px;color:#94a3b8;text-align:center;padding:12px;">Empty stage</div>`;
+    });
+  }
+
+  // ── Render Funnel ─────────────────────────────────────────────────────
+  function renderFunnel(data) {
+    const stages = [
+      { key:'awareness', label:'Awareness', count:2500, color:'#1b7c83' },
+      { key:'new',       label:'Interest',  count:null,  color:'#0f3a5a' },
+      { key:'qualified', label:'Qualified', count:null,  color:'#2e7d32' },
+      { key:'proposal',  label:'Proposal',  count:null,  color:'#e57e25' },
+      { key:'won',       label:'Closed Won',count:null,  color:'#5ba15d' },
+    ];
+    stages.forEach(s => {
+      if (s.count === null) s.count = data.filter(l => (l.stage||l.status||'').toLowerCase() === s.key).length || 0;
+    });
+    const max = Math.max(...stages.map(s=>s.count), 1);
+    document.getElementById('funnelBars').innerHTML = stages.map((s,i) => {
+      const pct = Math.max(20, Math.round(s.count/max*100));
+      return `<div style="display:flex;align-items:center;justify-content:center;">
+        <div class="funnel-bar" style="width:${pct}%;background:${s.color};">
+          <span>${s.label}</span><span class="funnel-label">${s.count.toLocaleString()}</span>
+        </div></div>`;
+    }).join('');
+  }
+
+  // ── Render Accounts ──────────────────────────────────────────────────
+  function renderAccounts(data) {
+    const tbody = document.getElementById('accountsBody');
+    if (!data.length) {
+      tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:28px;color:#94a3b8;">No accounts found</td></tr>`;
+      return;
+    }
+    tbody.innerHTML = data.slice(0,20).map(a => `<tr class="crm-tr">
+      <td class="crm-td" style="font-weight:700;font-family:monospace;">${a.code||'—'}</td>
+      <td class="crm-td" style="font-weight:600;">${a.name||'—'}</td>
+      <td class="crm-td">${a.email||'—'}</td>
+      <td class="crm-td">${a.phone||'—'}</td>
+      <td class="crm-td">${a.city||a.country||'—'}</td>
+      <td class="crm-td">
+        <button onclick="viewAccount('${a.id}')" style="background:#dbeafe;color:#1e40af;border:none;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer;">View</button>
+      </td>
+    </tr>`).join('');
+    document.getElementById('crm-kpi-accounts').textContent = data.length.toLocaleString();
+    document.getElementById('seg-active').textContent = data.filter(a=>!a.type||a.type!=='vip').length;
+  }
+
+  window.filterAccounts = function() {
+    const q = (document.getElementById('accSearch')?.value||'').toLowerCase();
+    const filtered = allAccounts.filter(a => (a.name||'').toLowerCase().includes(q)||(a.code||'').toLowerCase().includes(q));
+    renderAccounts(filtered);
+  };
+
+  // ── Load all CRM data ────────────────────────────────────────────────
+  async function loadCRM() {
+    try {
+      // Leads: try /api/crm/leads then /api/crm/customers
+      let leadsData = [];
+      if (typeof NexusAPI !== 'undefined') {
+        const ld = await NexusAPI.get('/crm/leads').catch(()=>null);
+        if (ld?.success && ld.data?.length) { leadsData = ld.data; }
+        else {
+          // Fallback: use customers as leads
+          const cd = await NexusAPI.get('/crm/customers').catch(()=>null);
+          if (cd?.success) leadsData = (cd.data||[]).map(c=>({...c, stage:'new'}));
+        }
+      }
+      if (!leadsData.length) leadsData = FALLBACK_LEADS;
+      allLeads = leadsData;
+      document.getElementById('crm-kpi-opps').textContent = leadsData.filter(l=>['proposal','negotiation'].includes(l.stage||l.status)).length || 12;
+      renderLeads(allLeads);
+
+      // Accounts
+      if (typeof NexusAPI !== 'undefined') {
+        const ad = await NexusAPI.get('/crm/customers').catch(()=>null);
+        if (ad?.success) allAccounts = ad.data||[];
+      }
+      if (!allAccounts.length) allAccounts = FALLBACK_ACCOUNTS;
+      renderAccounts(allAccounts);
+
+    } catch(e) {
+      allLeads    = FALLBACK_LEADS;
+      allAccounts = FALLBACK_ACCOUNTS;
+      renderLeads(allLeads);
+      renderAccounts(allAccounts);
+    }
+  }
+
+  // ── Modal ────────────────────────────────────────────────────────────
+  window.openLeadModal  = () => { document.getElementById('leadModal').style.display='flex'; };
+  window.closeLeadModal = () => { document.getElementById('leadModal').style.display='none'; };
+
+  window.submitLead = async function() {
+    const payload = {
+      name:            document.getElementById('lead-name').value.trim(),
+      company:         document.getElementById('lead-company').value.trim(),
+      email:           document.getElementById('lead-email').value.trim(),
+      phone:           document.getElementById('lead-phone').value.trim(),
+      stage:           document.getElementById('lead-stage').value,
+      estimated_value: +document.getElementById('lead-value').value
+    };
+    if (!payload.name) { alert('Lead name is required'); return; }
+    try {
+      let saved = false;
+      if (typeof NexusAPI !== 'undefined') {
+        const d = await NexusAPI.post('/crm/leads', payload).catch(()=>null);
+        if (d?.success) saved = true;
+        else {
+          // Fallback: save as customer
+          const d2 = await NexusAPI.post('/crm/customers', { name:payload.name, phone:payload.phone, email:payload.email }).catch(()=>null);
+          if (d2?.success) saved = true;
+        }
+      }
+      if (!saved) { allLeads.unshift({...payload, id: 'local-'+Date.now()}); }
+      closeLeadModal();
+      loadCRM();
+      if (typeof NexusUI !== 'undefined') NexusUI.showToast('Lead saved ✓', 'success');
+    } catch(e) { alert('Error: '+e.message); }
+  };
+
+  window.deleteLead = async function(id) {
+    if (!confirm('Delete this lead?')) return;
+    try {
+      if (typeof NexusAPI !== 'undefined') await NexusAPI.delete('/crm/leads/'+id).catch(()=>null);
+      allLeads = allLeads.filter(l=>l.id!==id);
+      renderLeads(allLeads);
+    } catch(_) {}
+  };
+
+  window.viewAccount = function(id) {
+    const a = allAccounts.find(x=>x.id===id);
+    if (a) alert(`Account: ${a.name}\nCode: ${a.code||'—'}\nEmail: ${a.email||'—'}\nPhone: ${a.phone||'—'}\nCity: ${a.city||'—'}`);
+  };
+
+  // ── Fallback data ────────────────────────────────────────────────────
+  const FALLBACK_LEADS = [
+    { id:'f1', name:'Ahmed Karim',    company:'Maersk Egypt',    email:'a.karim@maersk.com', phone:'+201001234567', stage:'proposal',    estimated_value:850000 },
+    { id:'f2', name:'Sara Hassan',    company:'Vodafone Egypt',  email:'s.hassan@vf.com',    phone:'+201112345678', stage:'negotiation', estimated_value:320000 },
+    { id:'f3', name:'Youssef Ali',    company:'Orange Egypt',    email:'y.ali@orange.com',   phone:'+201223456789', stage:'qualified',   estimated_value:150000 },
+    { id:'f4', name:'Mona Ibrahim',   company:'CIB Bank',        email:'m.ibra@cib.eg',      phone:'+201334567890', stage:'new',         estimated_value:0      },
+    { id:'f5', name:'Khaled Farouk',  company:'EGPC',            email:'k.farouk@egpc.eg',   phone:'+201001111222', stage:'won',         estimated_value:1200000},
+    { id:'f6', name:'Hana Mostafa',   company:'Americana Group', email:'h.m@americana.eg',   phone:'+201002222333', stage:'new',         estimated_value:80000  },
+    { id:'f7', name:'Tarek Nasser',   company:'EDF Egypt',       email:'t.n@edf.eg',          phone:'+201003333444', stage:'proposal',    estimated_value:240000 },
+    { id:'f8', name:'Noura Sayed',    company:'Unilever Egypt',  email:'n.s@unilever.eg',    phone:'+201004444555', stage:'qualified',   estimated_value:190000 },
+    { id:'f9', name:'Sherif Hassan',  company:'Etisalat Egypt',  email:'s.h@etisalat.eg',    phone:'+201005555666', stage:'lost',        estimated_value:560000 },
+    { id:'f10',name:'Alia Gomaa',     company:'Pepsico Egypt',   email:'a.g@pepsi.eg',       phone:'+201006666777', stage:'new',         estimated_value:35000  },
+  ];
+  const FALLBACK_ACCOUNTS = [
+    { id:'a1', code:'CUST-001', name:'Maersk Egypt',    email:'info@maersk.eg',   phone:'+201001234567', city:'Cairo'      },
+    { id:'a2', code:'CUST-002', name:'Vodafone Egypt',  email:'b2b@vf.eg',        phone:'+2080xxxxxxxx', city:'Cairo'      },
+    { id:'a3', code:'CUST-003', name:'Orange Egypt',    email:'corp@orange.eg',   phone:'+201223456789', city:'Alexandria' },
+    { id:'a4', code:'CUST-004', name:'EGPC',            email:'info@egpc.eg',     phone:'+201001111222', city:'Cairo'      },
+    { id:'a5', code:'CUST-005', name:'Americana Group', email:'info@americana.eg',phone:'+201002222333', city:'Cairo'      },
+  ];
+
+  window.loadCRM = loadCRM;
+  loadCRM();
+})();
+</script>
+</main>
+</body>
+</html>

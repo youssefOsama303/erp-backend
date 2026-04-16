@@ -1,0 +1,22 @@
+<svg width="256" height="256" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M60 128C60 100 85 75 115 75C135 75 152 85 162 100L190 140C200 155 217 165 237 165" stroke="#002D50" stroke-width="16" stroke-linecap="round"/>
+  <path d="M100 110L128 95L156 110V140L128 155L100 140V110Z" fill="#E88300" stroke="#002D50" stroke-width="4"/>
+  <path d="M100 110L128 125L156 110M128 125V155" stroke="#002D50" stroke-width="4"/>
+</svg>
+<!-- slide -->
+<svg width="256" height="256" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M60 128C60 100 85 75 115 75C135 75 152 85 162 100L190 140" stroke="#002D50" stroke-width="16" stroke-linecap="round"/>
+  <!-- Sales: Cart -->
+  <path d="M90 100H110L120 150H160L170 110H115" stroke="#67B82D" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="125" cy="165" r="5" fill="#67B82D"/>
+  <circle cx="155" cy="165" r="5" fill="#67B82D"/>
+</svg>
+<!-- slide -->
+<svg width="256" height="256" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M60 128C60 100 85 75 115 75C135 75 152 85 162 100" stroke="#002D50" stroke-width="16" stroke-linecap="round"/>
+  <!-- Purchasing: Truck -->
+  <rect x="100" y="115" width="40" height="25" rx="2" fill="#E88300" stroke="#002D50" stroke-width="2"/>
+  <rect x="140" y="125" width="15" height="15" rx="2" fill="#E88300" stroke="#002D50" stroke-width="2"/>
+  <circle cx="110" cy="145" r="4" fill="#002D50"/>
+  <circle cx="145" cy="145" r="4" fill="#002D50"/>
+</svg>

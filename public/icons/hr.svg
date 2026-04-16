@@ -1,0 +1,10 @@
+<svg width="256" height="256" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="128" cy="100" r="25" fill="#67B82D" stroke="white" stroke-width="8"/>
+  <path d="M80 160C80 140 100 130 128 130C156 130 176 140 176 160" stroke="white" stroke-width="12" stroke-linecap="round"/>
+</svg>
+<!-- slide -->
+<svg width="256" height="256" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M80 100H110L120 150H160L170 110H115" stroke="#67B82D" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="125" cy="170" r="10" fill="#67B82D"/>
+  <circle cx="155" cy="170" r="10" fill="#67B82D"/>
+</svg>

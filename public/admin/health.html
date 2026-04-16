@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>System Health — Nexus ERP Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+  <style>
+    /* ── Reset ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* ── Base ── */
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #0d1117;
+      color: #e2e8f0;
+      min-height: 100vh;
+      padding: 28px 20px;
+    }
+
+    .wrapper { max-width: 860px; margin: 0 auto; }
+
+    /* ── Top bar ── */
+    .page-top {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 22px; flex-wrap: wrap; gap: 12px;
+    }
+    .page-title {
+      font-size: 20px; font-weight: 900; color: #f8fafc;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .top-actions { display: flex; gap: 8px; align-items: center; }
+    .btn {
+      font-size: 12px; font-weight: 700; padding: 6px 14px;
+      border-radius: 8px; border: none; cursor: pointer;
+      transition: background .2s; font-family: inherit;
+    }
+    .btn-refresh { background: #21262d; color: #c9d1d9; border: 1px solid #30363d; }
+    .btn-refresh:hover { background: #30363d; }
+    .btn-back    { background: none; color: #8b949e; border: 1px solid #30363d; text-decoration: none;
+                   padding: 6px 14px; border-radius: 8px; font-size: 12px; font-weight: 600; }
+    .btn-back:hover { color: #e2e8f0; background: #21262d; }
+
+    /* ── Status Banner ── */
+    .banner {
+      border-radius: 12px; padding: 18px 22px;
+      display: flex; align-items: center; gap: 16px;
+      margin-bottom: 20px; transition: background .4s;
+    }
+    .banner.ok      { background: #0d2818; border: 1px solid #166534; }
+    .banner.error   { background: #2a0d0d; border: 1px solid #991b1b; }
+    .banner.loading { background: #161b22; border: 1px solid #30363d; }
+    .banner-icon    { font-size: 28px; flex-shrink: 0; }
+    .banner-text .title { font-size: 17px; font-weight: 800; }
+    .banner-text .sub   { font-size: 12px; color: #8b949e; margin-top: 3px; }
+    .banner-badge {
+      margin-left: auto; padding: 5px 14px; border-radius: 20px;
+      font-size: 11px; font-weight: 800; letter-spacing: .5px; flex-shrink: 0;
+    }
+    .badge-ok    { background: #166534; color: #4ade80; }
+    .badge-error { background: #7f1d1d; color: #fca5a5; }
+    .badge-wait  { background: #1f2937; color: #9ca3af; }
+
+    /* ── Grid ── */
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+    @media(max-width:580px){ .grid-2 { grid-template-columns: 1fr; } }
+
+    /* ── Card ── */
+    .card {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 12px;
+      padding: 18px;
+    }
+    .card-title {
+      font-size: 11px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .8px; color: #6e7681;
+      margin-bottom: 13px; display: flex; align-items: center; gap: 7px;
+    }
+
+    /* ── Metric rows ── */
+    .metric {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 8px 0; border-bottom: 1px solid #21262d;
+    }
+    .metric:last-child { border-bottom: none; }
+    .metric-label { font-size: 12px; color: #8b949e; }
+    .metric-val   {
+      font-family: 'Courier New', monospace;
+      font-size: 12px; font-weight: 600; color: #f0f6fc;
+      background: #0d1117; padding: 2px 8px; border-radius: 5px;
+    }
+    .c-ok   { color: #4ade80 !important; }
+    .c-warn { color: #fbbf24 !important; }
+    .c-err  { color: #f87171 !important; }
+
+    /* ── Pulse dot ── */
+    .dot {
+      width: 9px; height: 9px; border-radius: 50%;
+      display: inline-block; flex-shrink: 0;
+    }
+    .dot.green { background: #4ade80; animation: pulse-g 2s infinite; }
+    .dot.red   { background: #f87171; }
+    .dot.grey  { background: #484f58; }
+    @keyframes pulse-g {
+      0%,100% { box-shadow: 0 0 0 0 rgba(74,222,128,.4); }
+      50%      { box-shadow: 0 0 0 6px rgba(74,222,128,0); }
+    }
+
+    /* ── Memory bar ── */
+    .bar-bg { background: #21262d; border-radius: 4px; height: 6px; margin-top: 6px; overflow: hidden; }
+    .bar-fg { height: 100%; border-radius: 4px; transition: width .6s, background .6s; }
+
+    /* ── Raw JSON ── */
+    .raw-box {
+      background: #0d1117; border: 1px solid #21262d; border-radius: 8px;
+      padding: 12px; font-size: 12px; font-family: monospace;
+      color: #4ade80; overflow-x: auto; max-height: 200px; overflow-y: auto;
+      white-space: pre; line-height: 1.6;
+    }
+
+    /* ── Poll log ── */
+    .log-area {
+      background: #0d1117; border: 1px solid #21262d; border-radius: 8px;
+      padding: 10px; font-size: 12px; font-family: monospace;
+      max-height: 160px; overflow-y: auto; color: #8b949e;
+    }
+    .log-line { padding: 2px 0; border-bottom: 1px solid #161b22; }
+    .log-line:last-child { border: none; }
+    .log-ok  { color: #4ade80; }
+    .log-err { color: #f87171; }
+    .log-ts  { color: #484f58; margin-right: 8px; }
+
+    /* ── Footer row ── */
+    .footer-row {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-top: 16px; font-size: 11px; color: #484f58; flex-wrap: wrap; gap: 6px;
+    }
+    .next-check { color: #4ade80; }
+
+    /* ── Countdown ── */
+    .countdown-bar { height: 2px; background: #21262d; border-radius: 1px; margin-top: 6px; overflow: hidden; }
+    .countdown-fill {
+      height: 100%; background: #3fb950;
+      animation: cdown 30s linear infinite;
+    }
+    @keyframes cdown { from { width:100%; } to { width:0%; } }
+  </style>
+</head>
+<body>
+<div class="wrapper">
+
+  <!-- ── Top ── -->
+  <div class="page-top">
+    <div class="page-title">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2.5">
+        <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+      </svg>
+      Nexus ERP — System Health
+    </div>
+    <div class="top-actions">
+      <span style="font-size:11px;color:#484f58;background:#161b22;border:1px solid #30363d;padding:4px 10px;border-radius:6px;">
+        <span id="pollTarget">—</span>
+      </span>
+      <button class="btn btn-refresh" onclick="runCheck()">↺ Refresh now</button>
+      <a href="#welcome.html" class="btn-back" onclick="history.back();return false;">← Back</a>
+    </div>
+  </div>
+
+  <!-- ── Banner ── -->
+  <div class="banner loading" id="mainBanner">
+    <div class="banner-icon" id="bannerIcon">⏳</div>
+    <div class="banner-text">
+      <div class="title" id="bannerTitle">Checking system status…</div>
+      <div class="sub"   id="bannerSub">Connecting to backend at <code id="targetUrlDisplay">http://localhost:5000/health</code></div>
+    </div>
+    <div class="banner-badge badge-wait" id="bannerBadge">LOADING</div>
+  </div>
+
+  <!-- ── Row 1 ── -->
+  <div class="grid-2">
+
+    <!-- API Server -->
+    <div class="card">
+      <div class="card-title"><span class="dot grey" id="apiDot"></span>API Server</div>
+      <div class="metric"><span class="metric-label">Status</span>         <span class="metric-val" id="apiStatus">—</span></div>
+      <div class="metric"><span class="metric-label">Version</span>        <span class="metric-val" id="apiVersion">—</span></div>
+      <div class="metric"><span class="metric-label">Environment</span>    <span class="metric-val" id="apiEnv">—</span></div>
+      <div class="metric"><span class="metric-label">Uptime</span>         <span class="metric-val" id="apiUptime">—</span></div>
+      <div class="metric"><span class="metric-label">Server Time</span>    <span class="metric-val" id="apiTime">—</span></div>
+    </div>
+
+    <!-- Database -->
+    <div class="card">
+      <div class="card-title"><span class="dot grey" id="dbDot"></span>Database (PostgreSQL)</div>
+      <div class="metric"><span class="metric-label">Connection</span>     <span class="metric-val" id="dbConn">—</span></div>
+      <div class="metric"><span class="metric-label">Latency</span>        <span class="metric-val" id="dbLatency">—</span></div>
+      <div class="metric"><span class="metric-label">Readiness</span>      <span class="metric-val" id="dbReady">—</span></div>
+    </div>
+
+  </div>
+
+  <!-- ── Row 2 ── -->
+  <div class="grid-2">
+
+    <!-- Memory -->
+    <div class="card">
+      <div class="card-title">📊 Memory</div>
+      <div class="metric"><span class="metric-label">Heap Used</span>      <span class="metric-val" id="memUsed">—</span></div>
+      <div class="bar-bg"><div class="bar-fg" id="memBar" style="width:0%;background:#3fb950;"></div></div>
+      <div class="metric" style="margin-top:8px;">
+        <span class="metric-label">Heap Total</span>                       <span class="metric-val" id="memTotal">—</span>
+      </div>
+    </div>
+
+    <!-- Endpoints -->
+    <div class="card">
+      <div class="card-title">🔗 Endpoints</div>
+      <div class="metric"><span class="metric-label">/health</span>        <span class="metric-val" id="ep-health">—</span></div>
+      <div class="metric"><span class="metric-label">/healthz</span>       <span class="metric-val" id="ep-healthz">—</span></div>
+      <div class="metric"><span class="metric-label">/readiness</span>     <span class="metric-val" id="ep-ready">—</span></div>
+    </div>
+
+  </div>
+
+  <!-- ── Raw JSON ── -->
+  <div class="card" style="margin-bottom:14px;">
+    <div class="card-title">📋 Raw Response — <code style="color:#818cf8;">GET /health</code></div>
+    <div class="raw-box" id="rawBox">Waiting for data…</div>
+  </div>
+
+  <!-- ── Poll Log ── -->
+  <div class="card" style="margin-bottom:14px;">
+    <div class="card-title">🕑 Poll Log (last 8)</div>
+    <div class="log-area" id="pollLog">
+      <div class="log-line" style="color:#484f58;">Starting health monitor…</div>
+    </div>
+  </div>
+
+  <!-- ── Footer ── -->
+  <div class="footer-row">
+    <span>Auto-refresh every 30s &nbsp;|&nbsp; Target: <code id="footerTarget">http://localhost:5000</code></span>
+    <span class="next-check" id="lastChecked"></span>
+  </div>
+  <div class="countdown-bar"><div class="countdown-fill" id="cdFill"></div></div>
+
+</div><!-- /wrapper -->
+<script>
+(function () {
+  // ── Determine base URL ─────────────────────────────────────────────────────
+  // Works whether served from /admin/health.html at localhost:5000
+  // or opened directly. Always hits the Express server at port 5000.
+  const BASE = window.location.origin.includes('localhost')
+    ? 'http://localhost:5000'
+    : window.location.origin;
+
+  document.getElementById('pollTarget').textContent      = BASE + '/health';
+  document.getElementById('footerTarget').textContent    = BASE;
+  document.getElementById('targetUrlDisplay').textContent = BASE + '/health';
+
+  // ── Helpers ────────────────────────────────────────────────────────────────
+  function ts() {
+    return new Date().toLocaleTimeString('en-GB', { hour12: false });
+  }
+
+  function setVal(id, text, cls = '') {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.textContent = text;
+    el.className   = 'metric-val ' + cls;
+  }
+
+  function parseUptime(raw) {
+    if (!raw) return '—';
+    const s = parseInt(raw);
+    if (isNaN(s)) return raw;
+    const d = Math.floor(s / 86400), h = Math.floor((s % 86400) / 3600),
+          m = Math.floor((s % 3600) / 60), sec = s % 60;
+    let o = '';
+    if (d) o += d + 'd '; if (h) o += h + 'h '; if (m) o += m + 'm ';
+    return (o + sec + 's') || '0s';
+  }
+
+  function addLog(msg, ok = true) {
+    const log  = document.getElementById('pollLog');
+    const line = document.createElement('div');
+    line.className = 'log-line ' + (ok ? 'log-ok' : 'log-err');
+    line.innerHTML = `<span class="log-ts">[${ts()}]</span>${msg}`;
+    log.prepend(line);
+    while (log.children.length > 8) log.removeChild(log.lastChild);
+  }
+
+  async function probe(path) {
+    try {
+      const t0  = Date.now();
+      const res = await fetch(BASE + path, { cache: 'no-store' });
+      return { ok: res.ok, code: res.status, ms: Date.now() - t0 };
+    } catch { return { ok: false, code: 0, ms: 0 }; }
+  }
+
+  // ── Main check ─────────────────────────────────────────────────────────────
+  window.runCheck = async function () {
+    // Reset countdown
+    const fill = document.getElementById('cdFill');
+    fill.style.animation = 'none'; void fill.offsetWidth; fill.style.animation = '';
+
+    let overallOk = true;
+
+    // 1. /health
+    try {
+      const t0  = Date.now();
+      const res = await fetch(BASE + '/health', { cache: 'no-store' });
+      const d   = await res.json();
+      const rtt = Date.now() - t0;
+      const ok  = res.ok && d.status === 'ok';
+      if (!ok) overallOk = false;
+
+      // API card
+      document.getElementById('apiDot').className = `dot ${ok ? 'green' : 'red'}`;
+      setVal('apiStatus',  ok ? 'OPERATIONAL' : 'DEGRADED',   ok ? 'c-ok' : 'c-err');
+      setVal('apiVersion', d.version || '—');
+      setVal('apiEnv',     d.environment || '—',
+             d.environment === 'production' ? 'c-ok' : 'c-warn');
+      setVal('apiUptime',  parseUptime(d.uptime));
+      setVal('apiTime',    new Date(d.serverTime || Date.now()).toLocaleTimeString('en-GB'));
+
+      // DB card
+      const dbOk = d.database === 'connected';
+      if (!dbOk) overallOk = false;
+      document.getElementById('dbDot').className = `dot ${dbOk ? 'green' : 'red'}`;
+      setVal('dbConn',    dbOk ? 'connected' : d.database || 'ERROR', dbOk ? 'c-ok' : 'c-err');
+      setVal('dbLatency', d.dbLatency || `~${rtt}ms`);
+
+      // Memory
+      if (d.memory) {
+        const used  = parseInt(d.memory.used)  || 0;
+        const total = parseInt(d.memory.total) || 1;
+        const pct   = Math.min(100, Math.round(used / total * 100));
+        setVal('memUsed',  d.memory.used  || '—');
+        setVal('memTotal', d.memory.total || '—');
+        const bar = document.getElementById('memBar');
+        bar.style.width      = pct + '%';
+        bar.style.background = pct > 80 ? '#f87171' : pct > 60 ? '#fbbf24' : '#3fb950';
+      }
+
+      // Raw
+      document.getElementById('rawBox').textContent = JSON.stringify(d, null, 2);
+
+      addLog(`/health → ${d.status?.toUpperCase()} | DB:${d.database} | ${d.dbLatency || rtt+'ms'}`, ok);
+
+    } catch (err) {
+      overallOk = false;
+      ['apiDot','dbDot'].forEach(id => document.getElementById(id).className = 'dot red');
+      setVal('apiStatus', 'OFFLINE', 'c-err');
+      setVal('dbConn',    'OFFLINE', 'c-err');
+      document.getElementById('rawBox').textContent = 'Fetch error: ' + err.message;
+      addLog(`/health → FAILED — ${err.message}`, false);
+    }
+
+    // 2. /healthz + /readiness
+    const [hz, rd] = await Promise.all([probe('/healthz'), probe('/readiness')]);
+    setVal('ep-health',  '200 OK',                                   'c-ok');
+    setVal('ep-healthz', hz.ok  ? `200 OK (${hz.ms}ms)` : hz.code ? `${hz.code} ERR` : 'OFFLINE',  hz.ok ? 'c-ok' : 'c-err');
+    setVal('ep-ready',   rd.ok  ? `READY (${rd.ms}ms)`  : 'NOT READY',                              rd.ok ? 'c-ok' : 'c-err');
+
+    // Readiness detail
+    try {
+      const rbody = await fetch(BASE + '/readiness', { cache:'no-store' }).then(r=>r.json()).catch(()=>({}));
+      setVal('dbReady', rbody.ready ? 'READY' : 'NOT READY', rbody.ready ? 'c-ok' : 'c-err');
+    } catch { setVal('dbReady', rd.ok ? 'READY' : 'UNKNOWN', rd.ok ? 'c-ok' : 'c-warn'); }
+
+    // 3. Banner
+    const banner = document.getElementById('mainBanner');
+    banner.className = `banner ${overallOk ? 'ok' : 'error'}`;
+    document.getElementById('bannerIcon').textContent    = overallOk ? '✅' : '❌';
+    document.getElementById('bannerTitle').textContent   = overallOk ? 'All Systems Operational' : 'System Degraded';
+    document.getElementById('bannerSub').textContent     = overallOk
+      ? `Last checked at ${ts()} — All endpoints responding normally`
+      : `Issue detected at ${ts()} — Review data above`;
+    document.getElementById('bannerBadge').className     = `banner-badge ${overallOk ? 'badge-ok' : 'badge-error'}`;
+    document.getElementById('bannerBadge').textContent   = overallOk ? 'OPERATIONAL' : 'DEGRADED';
+    document.getElementById('lastChecked').textContent   = `Last checked: ${ts()}`;
+  };
+
+  // ── Start ──────────────────────────────────────────────────────────────────
+  runCheck();
+  setInterval(runCheck, 30000);
+})();
+</script>
+</body>
+</html>

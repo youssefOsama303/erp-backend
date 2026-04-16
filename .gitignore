@@ -1,0 +1,8 @@
+node_modules/
+.env
+
+# Generated Output files
+*.exe
+Nexus-ERP.js
+Start_Nexus.bat
+build_exe.bat
