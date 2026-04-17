@@ -32,8 +32,8 @@
     <p style="font-size:13px;color:#64748b;margin-top:4px;">Employee management, payroll, leave tracking &amp; performance (SAP SuccessFactors)</p>
   </div>
   <div style="display:flex;gap:10px;flex-wrap:wrap;">
-    <button class="hr-btn" style="background:#5ba15d;color:white;opacity:0.6;cursor:not-allowed;" title="Coming soon" onclick="alert('Employee form is currently under maintenance. Coming soon.')" disabled>+ New Employee</button>
-    <button class="hr-btn" style="background:#f1f5f9;color:#0f3a5a;border:1.5px solid #e2e8f0;opacity:0.6;cursor:not-allowed;" title="Coming soon" onclick="alert('Payroll generation engine will be available in next phase.')" disabled>Run Payroll</button>
+    <button class="hr-btn" style="background:#5ba15d;color:white;" onclick="openAddEmployeeModal()">+ New Employee</button>
+    <button class="hr-btn" style="background:#0f3a5a;color:white;" onclick="runPayroll()">Run Payroll</button>
   </div>
 </div>
 
@@ -172,11 +172,108 @@
     }
   }
 
+  window.loadHRData = loadHRData;
+
+  window.openAddEmployeeModal = async function() {
+    try {
+      const deptRes = await NexusAPI.get('/hr/departments');
+      if (deptRes && deptRes.length) {
+        document.getElementById('empDeptSelect').innerHTML = '<option value="">Select Department...</option>' + 
+          deptRes.map(d => `<option value="${d.id}">${d.name}</option>`).join('');
+      }
+      document.getElementById('addEmpModal').style.display = 'flex';
+    } catch(e) { alert('Error loading departments'); }
+  };
+
+  window.closeAddEmployeeModal = function() {
+    document.getElementById('addEmpModal').style.display = 'none';
+  };
+
+  window.saveEmployee = async function(e) {
+    e.preventDefault();
+    const payload = {
+      code: document.getElementById('empCode').value,
+      name: document.getElementById('empName').value,
+      department_id: document.getElementById('empDeptSelect').value,
+      job_title: document.getElementById('empTitle').value,
+      basic_salary: parseFloat(document.getElementById('empSalary').value),
+      join_date: document.getElementById('empDate').value
+    };
+    try {
+      const res = await NexusAPI.post('/hr/employees', payload);
+      if(res && res.success) {
+        closeAddEmployeeModal();
+        e.target.reset();
+        await loadHRData();
+      } else {
+        alert('Error: ' + res.message);
+      }
+    } catch(err) { alert('Error saving employee.'); }
+  };
+
+  window.runPayroll = async function() {
+    const month = prompt('Enter payroll month (YYYY-MM):');
+    if (!month || !/^\d{4}-\d{2}$/.test(month)) return;
+    try {
+      const res = await NexusAPI.post('/hr/payroll/generate', { month });
+      if (res && res.success) {
+        alert('Payroll generated successfully!');
+        if(typeof NexusUI !== 'undefined') NexusUI.showToast('Payroll generated', 'success');
+      } else {
+        alert('Error: ' + res.message);
+      }
+    } catch(err) { alert('Payroll generation failed.'); }
+  };
+
   // Initialize
   if(typeof NexusUtils !== 'undefined') NexusUtils.initSidebar('hr');
   loadHRData();
 })();
 </script>
+
+<div id="addEmpModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;align-items:center;justify-content:center;">
+  <form onsubmit="saveEmployee(event)" style="background:white;border-radius:16px;padding:28px;width:480px;max-width:95vw;">
+    <h3 style="margin:0 0 20px;font-size:18px;font-weight:800;color:#0f3a5a;">Add New Employee</h3>
+    
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+      <div>
+        <label style="display:block;font-size:12px;font-weight:600;margin-bottom:6px;">Employee Code *</label>
+        <input type="text" id="empCode" required style="width:100%;padding:10px;border:1px solid #e2e8f0;border-radius:8px;font-family:inherit;">
+      </div>
+      <div>
+        <label style="display:block;font-size:12px;font-weight:600;margin-bottom:6px;">Join Date *</label>
+        <input type="date" id="empDate" required style="width:100%;padding:10px;border:1px solid #e2e8f0;border-radius:8px;font-family:inherit;">
+      </div>
+    </div>
+    
+    <div style="margin-bottom:16px;">
+      <label style="display:block;font-size:12px;font-weight:600;margin-bottom:6px;">Full Name *</label>
+      <input type="text" id="empName" required style="width:100%;padding:10px;border:1px solid #e2e8f0;border-radius:8px;font-family:inherit;">
+    </div>
+    
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+      <div>
+        <label style="display:block;font-size:12px;font-weight:600;margin-bottom:6px;">Department *</label>
+        <select id="empDeptSelect" required style="width:100%;padding:10px;border:1px solid #e2e8f0;border-radius:8px;font-family:inherit;"></select>
+      </div>
+      <div>
+        <label style="display:block;font-size:12px;font-weight:600;margin-bottom:6px;">Job Title *</label>
+        <input type="text" id="empTitle" required style="width:100%;padding:10px;border:1px solid #e2e8f0;border-radius:8px;font-family:inherit;">
+      </div>
+    </div>
+
+    <div style="margin-bottom:24px;">
+      <label style="display:block;font-size:12px;font-weight:600;margin-bottom:6px;">Basic Salary (EGP) *</label>
+      <input type="number" id="empSalary" min="1" step="0.01" required placeholder="0.00" style="width:100%;padding:10px;border:1px solid #e2e8f0;border-radius:8px;font-family:inherit;font-size:16px;font-weight:700;">
+    </div>
+    
+    <div style="display:flex;justify-content:flex-end;gap:12px;">
+      <button type="button" class="hr-btn" style="background:#f1f5f9;color:#64748b;" onclick="closeAddEmployeeModal()">Cancel</button>
+      <button type="submit" class="hr-btn" style="background:#0f3a5a;color:white;">Save Employee</button>
+    </div>
+  </form>
+</div>
+
 </main>
 </body>
 </html>

@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexus ERP - Lightweight Solution for SMEs</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', Arial, sans-serif;
+            background-color: #f3f4f6;
+            color: #1f2937;
+        }
+        
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: #ffffff;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #0891b2 0%, #2563eb 100%);
+            padding: 35px 30px;
+            text-align: center;
+        }
+        
+        .logo {
+            width: 50px;
+            height: 50px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 12px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 15px;
+        }
+        
+        .logo svg {
+            width: 28px;
+            height: 28px;
+            fill: white;
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+            font-weight: 700;
+            color: white;
+        }
+        
+        .header p {
+            margin: 8px 0 0;
+            font-size: 14px;
+            color: rgba(255,255,255,0.9);
+        }
+        
+        .content {
+            padding: 35px 30px;
+        }
+        
+        .greeting {
+            font-size: 18px;
+            font-weight: 600;
+            color: #0891b2;
+            margin-bottom: 20px;
+        }
+        
+        .message {
+            font-size: 15px;
+            line-height: 1.7;
+            color: #4b5563;
+            margin-bottom: 25px;
+        }
+        
+        .value-prop {
+            background: linear-gradient(135deg, rgba(8, 145, 178, 0.05) 0%, rgba(37, 99, 235, 0.05) 100%);
+            border-left: 4px solid #0891b2;
+            padding: 20px;
+            margin-bottom: 25px;
+            border-radius: 0 12px 12px 0;
+        }
+        
+        .value-prop h3 {
+            margin: 0 0 12px;
+            color: #0891b2;
+            font-size: 16px;
+        }
+        
+        .value-prop ul {
+            margin: 0;
+            padding-left: 20px;
+            color: #4b5563;
+        }
+        
+        .value-prop li {
+            margin-bottom: 8px;
+            line-height: 1.5;
+        }
+        
+        .cta-section {
+            text-align: center;
+            padding: 25px;
+            background: #f9fafb;
+            border-radius: 12px;
+            margin-bottom: 25px;
+        }
+        
+        .cta-button {
+            display: inline-block;
+            padding: 14px 32px;
+            background: linear-gradient(135deg, #0891b2 0%, #2563eb 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(8, 145, 178, 0.3);
+        }
+        
+        .cta-note {
+            margin-top: 15px;
+            font-size: 13px;
+            color: #6b7280;
+        }
+        
+        .social-proof {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 20px;
+            background: #f9fafb;
+            border-radius: 12px;
+            margin-bottom: 25px;
+        }
+        
+        .avatars {
+            display: flex;
+        }
+        
+        .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 2px solid white;
+            margin-left: -10px;
+            object-fit: cover;
+        }
+        
+        .avatar:first-child {
+            margin-left: 0;
+        }
+        
+        .social-proof-text {
+            font-size: 13px;
+            color: #6b7280;
+        }
+        
+        .social-proof-text strong {
+            color: #1f2937;
+        }
+        
+        .signature {
+            border-top: 1px solid #e5e7eb;
+            padding-top: 25px;
+        }
+        
+        .signature-name {
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 5px;
+        }
+        
+        .signature-title {
+            font-size: 13px;
+            color: #6b7280;
+            margin-bottom: 15px;
+        }
+        
+        .signature-links {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .signature-links a {
+            color: #0891b2;
+            text-decoration: none;
+            font-size: 13px;
+        }
+        
+        .footer {
+            padding: 25px 30px;
+            text-align: center;
+            background: #f9fafb;
+            border-top: 1px solid #e5e7eb;
+        }
+        
+        .footer p {
+            margin: 0;
+            color: #9ca3af;
+            font-size: 12px;
+        }
+        
+        .unsubscribe {
+            margin-top: 10px;
+        }
+        
+        .unsubscribe a {
+            color: #9ca3af;
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div class="logo">
+                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+                </svg>
+            </div>
+            <h1>Nexus ERP</h1>
+            <p>Streamlined Business Management for SMEs</p>
+        </div>
+        
+        <!-- Content -->
+        <div class="content">
+            <div class="greeting">Hi [Name],</div>
+            
+            <div class="message">
+                I noticed you're working in [Industry/Role] and thought you might be interested in 
+                how other companies like yours are streamlining their operations.
+            </div>
+            
+            <div class="value-prop">
+                <h3>🚀 What makes Nexus ERP different?</h3>
+                <ul>
+                    <li><strong>Lightning-fast</strong> — No loading screens, everything works instantly</li>
+                    <li><strong>Zero learning curve</strong> — Your team can start using it today</li>
+                    <li><strong>All-in-one</strong> — Accounting, Inventory, Sales, HR in one dashboard</li>
+                    <li><strong>Fraction of the cost</strong> — Compared to SAP/Odoo</li>
+                </ul>
+            </div>
+            
+            <div class="social-proof">
+                <div class="avatars">
+                    <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&h=80&fit=crop&crop=face" alt="User" class="avatar">
+                    <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80&h=80&fit=crop&crop=face" alt="User" class="avatar">
+                    <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=80&h=80&fit=crop&crop=face" alt="User" class="avatar">
+                </div>
+                <div class="social-proof-text">
+                    <strong>500+ companies</strong> already using Nexus ERP<br>
+                    to manage their business operations
+                </div>
+            </div>
+            
+            <div class="cta-section">
+                <a href="#" class="cta-button">Watch 60-Second Demo</a>
+                <p class="cta-note">No signup required • See it in action</p>
+            </div>
+            
+            <div class="signature">
+                <div class="signature-name">[Your Name]</div>
+                <div class="signature-title">Founder & CEO, Nexus ERP</div>
+                <div class="signature-links">
+                    <a href="#">Book a Call</a>
+                    <a href="#">View Pricing</a>
+                    <a href="#">Learn More</a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Footer -->
+        <div class="footer">
+            <p>© 2025 Nexus ERP. All rights reserved.</p>
+            <p class="unsubscribe">
+                <a href="#">Unsubscribe</a> | <a href="#">Privacy Policy</a>
+            </p>
+        </div>
+    </div>
+</body>
+</html>

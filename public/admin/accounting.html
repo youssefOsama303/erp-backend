@@ -36,7 +36,7 @@
     <p style="font-size:13px;color:#64748b;margin-top:4px;">General Ledger, Chart of Accounts & Financial KPIs</p>
   </div>
   <div style="display:flex;gap:10px;flex-wrap:wrap;">
-    <button class="fi-btn" style="background:#0f3a5a;color:white;opacity:0.6;cursor:not-allowed;" disabled title="Coming soon">+ Journal Entry</button>
+    <button class="fi-btn" style="background:#0f3a5a;color:white;" onclick="openJEModal()">+ Journal Entry</button>
     <button class="fi-btn" style="background:#f1f5f9;color:#0f3a5a;border:1.5px solid #e2e8f0;" onclick="loadFinancials()">↺ Refresh</button>
   </div>
 </div>
@@ -95,6 +95,17 @@
     </div>
   </div>
 
+</div>
+
+<!-- Journal Entries Section -->
+<div class="fi-card" style="margin-top:24px;">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+    <h2 style="font-size:15px;font-weight:700;color:#0f3a5a;margin:0;">🗒️ Journal Entries</h2>
+    <button class="fi-btn" style="background:#5ba15d;color:white;" onclick="openJEModal()">+ New Entry</button>
+  </div>
+  <div id="journalEntriesTable">
+    <div style="text-align:center;padding:32px;color:#94a3b8;">Loading entries…</div>
+  </div>
 </div>
 
 <script src="/js/api.js"></script>
@@ -172,6 +183,7 @@
       const acc = await NexusAPI.get('/accounting');
       const tbody = document.getElementById('accountsTable');
       if (acc && acc.success && acc.data.length) {
+        window.fiAllAccounts = acc.data; // save for modal
         tbody.innerHTML = `
           <table style="width:100%;border-collapse:collapse;">
             <thead>
@@ -210,11 +222,127 @@
     }
   }
 
+  async function loadJournalEntries() {
+    try {
+      const res = await NexusAPI.get('/accounting/journal-entries');
+      const container = document.getElementById('journalEntriesTable');
+      if (res && res.success && res.data.length) {
+        container.innerHTML = `
+          <table style="width:100%;border-collapse:collapse;font-size:12px;">
+            <thead style="background:#f8fafc;color:#64748b;text-align:left;">
+              <tr>
+                <th style="padding:10px;">Date</th>
+                <th style="padding:10px;">Ref</th>
+                <th style="padding:10px;">Description</th>
+                <th style="padding:10px;">Debit A/C</th>
+                <th style="padding:10px;">Credit A/C</th>
+                <th style="padding:10px;text-align:right;">Amount (EGP)</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${res.data.map(je => `
+                <tr style="border-bottom:1px solid #f1f5f9;">
+                  <td style="padding:10px;">${je.entry_date ? je.entry_date.substring(0,10) : ''}</td>
+                  <td style="padding:10px;font-weight:700;">${je.reference}</td>
+                  <td style="padding:10px;">${je.description || '-'}</td>
+                  <td style="padding:10px;color:#ef4444;">${je.dr_code} - ${je.dr_name}</td>
+                  <td style="padding:10px;color:#5ba15d;">${je.cr_code} - ${je.cr_name}</td>
+                  <td style="padding:10px;text-align:right;font-weight:700;">${parseFloat(je.amount).toLocaleString()}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>`;
+      } else {
+        container.innerHTML = '<div style="padding:20px;text-align:center;color:#94a3b8;">No entries yet.</div>';
+      }
+    } catch(e) { console.error('[FI/CO] Error loading entries:', e); }
+  }
+
+  window.openJEModal = function() {
+    const accOptions = (window.fiAllAccounts || []).map(a => `<option value="${a.id}">${a.code} - ${a.name}</option>`).join('');
+    document.getElementById('jeDebitSelect').innerHTML = '<option value="">Select Account...</option>' + accOptions;
+    document.getElementById('jeCreditSelect').innerHTML = '<option value="">Select Account...</option>' + accOptions;
+    document.getElementById('jeModal').style.display = 'flex';
+  };
+
+  window.closeJEModal = function() {
+    document.getElementById('jeModal').style.display = 'none';
+  };
+
+  window.saveJournalEntry = async function(e) {
+    e.preventDefault();
+    const payload = {
+      entry_date: document.getElementById('jeDate').value,
+      reference: document.getElementById('jeRef').value,
+      description: document.getElementById('jeDesc').value,
+      debit_account_id: document.getElementById('jeDebitSelect').value,
+      credit_account_id: document.getElementById('jeCreditSelect').value,
+      amount: parseFloat(document.getElementById('jeAmount').value)
+    };
+    try {
+      const res = await NexusAPI.post('/accounting/journal-entries', payload);
+      if(res.success) {
+        closeJEModal();
+        e.target.reset();
+        await loadFinancials(); // Refresh KPIs and Accounts
+        await loadJournalEntries(); // Refresh table
+      } else {
+        alert('Error: ' + res.message);
+      }
+    } catch(err) { alert('Error creating entry.'); }
+  };
+
   if (typeof NexusUtils !== 'undefined') NexusUtils.initSidebar('accounting');
   loadFinancials();
+  loadJournalEntries();
   window.loadFinancials = loadFinancials;
 })();
 </script>
+
+<!-- Journal Entry Modal -->
+<div id="jeModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;align-items:center;justify-content:center;">
+  <form onsubmit="saveJournalEntry(event)" style="background:white;border-radius:16px;padding:28px;width:500px;max-width:95vw;">
+    <h3 style="margin:0 0 20px;font-size:18px;font-weight:800;color:#0f3a5a;">New Journal Entry</h3>
+    
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+      <div>
+        <label style="display:block;font-size:12px;font-weight:600;margin-bottom:6px;">Date *</label>
+        <input type="date" id="jeDate" required style="width:100%;padding:10px;border:1px solid #e2e8f0;border-radius:8px;font-family:inherit;">
+      </div>
+      <div>
+        <label style="display:block;font-size:12px;font-weight:600;margin-bottom:6px;">Reference *</label>
+        <input type="text" id="jeRef" placeholder="e.g. JE-100" required style="width:100%;padding:10px;border:1px solid #e2e8f0;border-radius:8px;font-family:inherit;">
+      </div>
+    </div>
+    
+    <div style="margin-bottom:16px;">
+      <label style="display:block;font-size:12px;font-weight:600;margin-bottom:6px;">Description</label>
+      <input type="text" id="jeDesc" placeholder="Explanation for this entry..." style="width:100%;padding:10px;border:1px solid #e2e8f0;border-radius:8px;font-family:inherit;">
+    </div>
+    
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+      <div>
+        <label style="display:block;font-size:12px;font-weight:600;margin-bottom:6px;color:#ef4444;">Debit Account *</label>
+        <select id="jeDebitSelect" required style="width:100%;padding:10px;border:1px solid #e2e8f0;border-radius:8px;font-family:inherit;"></select>
+      </div>
+      <div>
+        <label style="display:block;font-size:12px;font-weight:600;margin-bottom:6px;color:#5ba15d;">Credit Account *</label>
+        <select id="jeCreditSelect" required style="width:100%;padding:10px;border:1px solid #e2e8f0;border-radius:8px;font-family:inherit;"></select>
+      </div>
+    </div>
+
+    <div style="margin-bottom:24px;">
+      <label style="display:block;font-size:12px;font-weight:600;margin-bottom:6px;">Amount (EGP) *</label>
+      <input type="number" id="jeAmount" min="0.01" step="0.01" required placeholder="0.00" style="width:100%;padding:10px;border:1px solid #e2e8f0;border-radius:8px;font-family:inherit;font-size:16px;font-weight:700;">
+    </div>
+    
+    <div style="display:flex;justify-content:flex-end;gap:12px;">
+      <button type="button" class="fi-btn" style="background:#f1f5f9;color:#64748b;" onclick="closeJEModal()">Cancel</button>
+      <button type="submit" class="fi-btn" style="background:#0f3a5a;color:white;">Submit Entry</button>
+    </div>
+  </form>
+</div>
+
 </main>
 </body>
 </html>
